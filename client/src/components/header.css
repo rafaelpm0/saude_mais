@@ -1,0 +1,54 @@
+.drawer-toggle-custom {
+  display: none;
+}
+
+.drawer-label-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.drawer-toggle-text-custom {
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.4s ease-out, opacity 0.4s ease-out;
+  opacity: 0;
+}
+
+.drawer-toggle-custom:checked + .drawer-label-custom .drawer-toggle-text-custom,
+.drawer-toggle-custom:checked ~ #navbar-container #navbar .drawer-toggle-text-custom {
+  width: 200px;
+  opacity: 1;
+  transition: width 0.6s ease-in, opacity 0.6s ease-in;
+}
+
+.drawer-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+
+.drawer-button:hover,
+.drawer-button:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+#navar {
+  height: 100%;
+}
+
+#navbar-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-image: url('../assets/pattern_hexagon.svg');
+}

@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+// ----------------------------
+//   Tabela Especialidade
+// ----------------------------
+model Especialidade {
+  id        Int      @id @default(autoincrement())
+  descricao String
+
+  usuarioMedico UsuarioMedico[]
+}
+
+
+// ----------------------------
+//   Tabela Convenio
+// ----------------------------
+model Convenio {
+  id        Int      @id @default(autoincrement())
+  nome      String
+
+  usuarioMedico UsuarioMedico[]
+  consultas     Consulta[]
+}
+
+// ----------------------------
+//   Tabela Usuario
+// ----------------------------
+model Usuario {
+  id        Int     @id @default(autoincrement())
+  login     String
+  senha     String   // 8 a 20 caracteres (regra aplicada na validação, não no schema)
+  tipo      Int      // 1 = paciente, 2 = médico, 3 = adm
+  crm       String?  // só médicos
+  faltasConsecutivas Int // só paciente
+  cpf       String
+  nome      String
+  telefone  String
+  email     String
+  
+
+  medicoEspecialidades UsuarioMedico[]
+  disponibilidades    DispMedico[]
+  agendasMedico       Agenda[] @relation("AgendaMedico")
+  agendasCliente      Agenda[] @relation("AgendaCliente")
+}
+
+// ----------------------------
+//   Tabela UsuarioMedico
+//   (Especialidade + Convênio para médicos)
+// ----------------------------
+model UsuarioMedico {
+  idUsuario       Int
+  idEspecialidade Int
+  idConvenio      Int
+
+  medico        Usuario        @relation(fields: [idUsuario], references: [id])
+  especialidade Especialidade  @relation(fields: [idEspecialidade], references: [id])
+  convenio      Convenio       @relation(fields: [idConvenio], references: [id])
+
+  @@id([idUsuario, idEspecialidade, idConvenio])
+}
+
+// ----------------------------
+//   Tabela Disponibilidade do Médico
+// ----------------------------
+model DispMedico {
+  idUsuario  Int
+  diaSemana  Int      // 1 a 7
+  horaInicio String
+  horaFim    String
+
+  medico Usuario @relation(fields: [idUsuario], references: [id])
+
+  @@id([idUsuario, diaSemana])
+}
+
+// ----------------------------
+//   Tabela Agenda (agendamentos)
+// ----------------------------
+model Agenda {
+  id         Int      @id @default(autoincrement())
+  idMedico   Int
+  idCliente  Int
+  dtaInicial DateTime
+  dtaFinal   DateTime
+  status     String
+
+  medico  Usuario @relation("AgendaMedico", fields: [idMedico], references: [id])
+  cliente Usuario @relation("AgendaCliente", fields: [idCliente], references: [id])
+
+  consultas Consulta[]
+}
+
+// ----------------------------
+//   Tabela Consulta
+// ----------------------------
+model Consulta {
+  id         Int      @id @default(autoincrement())
+  idAgenda   Int
+  idConvenio Int
+  observacao String?
+  status     String   //  ‘A’ para ativo, ‘F’ para finalizado/atendido, ‘C’ cancelado, ‘N’ não comparecimento
+
+  agenda    Agenda   @relation(fields: [idAgenda], references: [id])
+  convenio  Convenio @relation(fields: [idConvenio], references: [id])
+
+}

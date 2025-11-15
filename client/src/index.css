@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-header: #0E1B6B;
+  --color-navbar: #131C55;
+}
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow-x: hidden;
+}
+
+
