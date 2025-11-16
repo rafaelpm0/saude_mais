@@ -49,6 +49,18 @@ export interface Medico {
   }[];
 }
 
+export interface Usuario {
+  id: number;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  tipo: number;
+  tipoDescricao: string;
+  faltasConsecutivas: number;
+  status: string;
+}
+
 export interface CreateMedicoRequest {
   nome: string;
   cpf: string;
@@ -175,6 +187,20 @@ export const adminApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Medico'],
     }),
+
+    // ========== USUÁRIOS ==========
+    getUsuarios: builder.query<Usuario[], void>({
+      query: () => 'admin/usuarios',
+      providesTags: ['Usuario'],
+    }),
+
+    resetarFaltasUsuario: builder.mutation<Usuario, number>({
+      query: (id) => ({
+        url: `admin/usuarios/${id}/resetar-faltas`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Usuario'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -199,4 +225,8 @@ export const {
   useCreateMedicoMutation,
   useUpdateMedicoMutation,
   useDeleteMedicoMutation,
+
+  // Usuários
+  useGetUsuariosQuery,
+  useResetarFaltasUsuarioMutation,
 } = adminApi;

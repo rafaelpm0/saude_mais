@@ -23,6 +23,6 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['User', 'Item', 'Especialidade', 'Medico', 'Convenio', 'Consulta', 'Calendario'], // Adicione aqui os tipos de cache do seu projeto
+  tagTypes: ['User', 'Item', 'Especialidade', 'Medico', 'Convenio', 'Consulta', 'Calendario', 'Usuario'], // Adicione aqui os tipos de cache do seu projeto
   endpoints: () => ({}),
 })

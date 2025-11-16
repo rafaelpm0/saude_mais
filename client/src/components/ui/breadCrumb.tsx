@@ -11,6 +11,7 @@ function BreadCrumb() {
       'consultas': 'Consultas',
       'agenda': 'Minha Agenda',
       'usuarios': 'Usuários',
+      'bloqueio-usuarios': 'Bloqueio de Usuários',
       'relatorios': 'Relatórios',
       'login': 'Login',
       'register': 'Cadastro'

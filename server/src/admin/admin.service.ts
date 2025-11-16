@@ -444,4 +444,30 @@ export class AdminService {
       throw new BadRequestException('Erro interno ao excluir médico');
     }
   }
+
+  async getUsuarios() {
+    const usuarios = await this.prisma.usuario.findMany({
+      where: { tipo: { in: [1, 2] } },
+      select: {
+        id: true, nome: true, cpf: true, email: true, telefone: true,
+        tipo: true, faltasConsecutivas: true
+      },
+      orderBy: { nome: 'asc' }
+    });
+    return usuarios.map(u => ({
+      ...u,
+      tipoDescricao: u.tipo === 1 ? 'Paciente' : 'Médico',
+      status: u.faltasConsecutivas >= 3 ? 'Bloqueado' : 'Normal'
+    }));
+  }
+
+  async resetarFaltasUsuario(id: number) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
+    if (usuario.tipo === 3) throw new BadRequestException('Não é possível resetar faltas de administradores');
+    return await this.prisma.usuario.update({
+      where: { id },
+      data: { faltasConsecutivas: 0 }
+    });
+  }
 }

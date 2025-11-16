@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import Welcome from './pages/Welcome'
 import Agendamento from './pages/Agendamento'
 import AdminCadastros from './pages/AdminCadastros'
+import BloqueioUsuarios from './pages/BloqueioUsuarios'
 import Header from './components/header'
 import AuthInitializer from './components/AuthInitializer'
 import BreadCrumb from './components/ui/breadCrumb'
@@ -70,6 +71,9 @@ function App() {
           <Route path="/agendamento" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
           <Route path="/cadastros" element={
             isAuthenticated && user?.tipo === 3 ? <AdminCadastros /> : <Welcome />
+          } />
+          <Route path="/bloqueio-usuarios" element={
+            isAuthenticated && user?.tipo === 3 ? <BloqueioUsuarios /> : <Welcome />
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

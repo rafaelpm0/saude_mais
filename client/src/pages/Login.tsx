@@ -41,11 +41,11 @@ function Login() {
       // Redirecionamento baseado no tipo de usuário
       const redirectPaths = {
         1: '/agendamento', // Paciente
-        2: '/home',        // Médico
+        2: '/agendamento', // Médico
         3: '/cadastros'    // Administrador
       };
 
-      const redirectPath = redirectPaths[result.user.tipo as keyof typeof redirectPaths] || (result.user.tipo === 3 ? '/cadastros' : '/home');
+      const redirectPath = redirectPaths[result.user.tipo as keyof typeof redirectPaths] || '/agendamento';
       navigate(redirectPath);
       
     } catch (error) {

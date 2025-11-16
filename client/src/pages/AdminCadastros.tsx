@@ -53,6 +53,20 @@ function AdminCadastros() {
     onConfirm: (() => void) | null;
   }>({ isOpen: false, type: null, item: null, onConfirm: null });
 
+  // ========== UTILITY FUNCTIONS ==========
+  /**
+   * Filtra especialidades únicas de um médico para evitar duplicação na exibição
+   */
+  const getEspecialidadesUnicas = (especialidades: Medico['especialidades']) => {
+    return especialidades.reduce((acc, esp) => {
+      const jaExiste = acc.find(e => e.especialidade.id === esp.especialidade.id);
+      if (!jaExiste) {
+        acc.push(esp);
+      }
+      return acc;
+    }, [] as typeof especialidades);
+  };
+
   // ========== DEBOUNCED FILTERS ==========
   const debouncedFiltroEspecialidade = useDebounce(filtroEspecialidade, 500);
   const debouncedFiltroConvenio = useDebounce(filtroConvenio, 500);
@@ -272,15 +286,19 @@ function AdminCadastros() {
     {
       header: 'Especialidades',
       accessor: 'especialidades',
-      render: (_: unknown, rowData: Medico) => (
-        <div className="flex flex-wrap gap-1">
-          {rowData.especialidades.map((esp, index) => (
-            <span key={index} className="admin-badge badge badge-primary badge-sm">
-              {esp.especialidade.descricao}
-            </span>
-          ))}
-        </div>
-      ),
+      render: (_: unknown, rowData: Medico) => {
+        const especialidadesUnicas = getEspecialidadesUnicas(rowData.especialidades);
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {especialidadesUnicas.map((esp, index) => (
+              <span key={index} className="admin-badge badge badge-primary badge-sm">
+                {esp.especialidade.descricao}
+              </span>
+            ))}
+          </div>
+        );
+      },
     },
     {
       header: 'Ações',

@@ -167,4 +167,16 @@ export class AdminController {
   async deleteMedico(@Param('id') id: string): Promise<void> {
     return this.adminService.deleteMedico(parseInt(id));
   }
+
+  @Get('usuarios')
+  @ApiOperation({ summary: 'Listar todos os usuários' })
+  async getUsuarios() {
+    return this.adminService.getUsuarios();
+  }
+
+  @Put('usuarios/:id/resetar-faltas')
+  @ApiOperation({ summary: 'Resetar faltas consecutivas do usuário' })
+  async resetarFaltasUsuario(@Param('id') id: string) {
+    return this.adminService.resetarFaltasUsuario(parseInt(id));
+  }
 }
