@@ -95,6 +95,16 @@ function Header() {
                 {user.tipo === 3 && (
                   <>
                     <li>
+                      <button onClick={() => navigate('/cadastros')} className="drawer-button">
+                        <div className="icon-container">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                        </div>
+                        <span className="drawer-toggle-text-custom">Cadastros</span>
+                      </button>
+                    </li>
+                    <li>
                       <button onClick={() => navigate('/usuarios')} className="drawer-button">
                         <div className="icon-container">
                           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

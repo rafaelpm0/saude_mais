@@ -22,7 +22,7 @@ interface Column {
     handleChange: (checked: boolean, rowData: any) => void
     isChecked?: (rowData: any) => boolean
   }
-  render?: (value: any) => ReactNode
+  render?: (value: any, rowData?: any) => ReactNode
 }
 
 interface DataTableProps<T> {
@@ -56,19 +56,21 @@ export function DataTable<T>({
   const finalIndex = initialIndex + itemsPerPage
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filteredData =
-    data?.filter((item: any) => {
-      return Object.entries(filterValues).every(([key, value]) => {
-        if (!value) return true
-        return String(item[key])
-          .toLowerCase()
-          .includes(String(value).toLowerCase())
+  const filteredData = Array.isArray(data) 
+    ? data.filter((item: any) => {
+        return Object.entries(filterValues).every(([key, value]) => {
+          if (!value) return true
+          const itemValue = item?.[key]
+          return itemValue != null && String(itemValue)
+            .toLowerCase()
+            .includes(String(value).toLowerCase())
+        })
       })
-    }) || [] // Adiciona um array vazio como fallback
+    : [] // Adiciona um array vazio como fallback
 
   const paginatedData = filteredData.slice(initialIndex, finalIndex)
-  const total = Math.floor(filteredData.length / itemsPerPage)
-  const totalPages = total === 0 ? 1 : total
+  const total = Math.ceil(filteredData.length / itemsPerPage)
+  const totalPages = Math.max(total, 1)
 
   const handleFilterChange = (name: string, value: string) => {
     setFilterValues((prev) => ({
@@ -169,7 +171,7 @@ export function DataTable<T>({
           </thead>
 
           <tbody>
-            {
+            {paginatedData && paginatedData.length > 0 ? (
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               paginatedData.map((item: any, index: number) => (
                 <tr
@@ -204,7 +206,7 @@ export function DataTable<T>({
                           }}
                         />
                       ) : column.render ? (
-                        column.render(item[column.accessor])
+                        column.render(item[column.accessor], item)
                       ) : (
                         item[column.accessor]
                       )}
@@ -212,7 +214,13 @@ export function DataTable<T>({
                   ))}
                 </tr>
               ))
-            }
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="text-center py-4">
+                  {isLoading ? 'Carregando...' : 'Nenhum dado encontrado'}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

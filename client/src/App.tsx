@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Welcome from './pages/Welcome'
 import Agendamento from './pages/Agendamento'
+import AdminCadastros from './pages/AdminCadastros'
 import Header from './components/header'
 import AuthInitializer from './components/AuthInitializer'
 import BreadCrumb from './components/ui/breadCrumb'
@@ -13,7 +14,7 @@ import './App.css'
 import './layout.css'
 
 function App() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     // Adicionar listener para mudanças no estado da navbar
@@ -61,8 +62,15 @@ function App() {
         {isAuthenticated && <BreadCrumb />}
         
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
+          <Route path="/" element={
+            isAuthenticated ? (
+              user?.tipo === 3 ? <AdminCadastros /> : <Agendamento />
+            ) : <Welcome />
+          } />
           <Route path="/agendamento" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
+          <Route path="/cadastros" element={
+            isAuthenticated && user?.tipo === 3 ? <AdminCadastros /> : <Welcome />
+          } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>

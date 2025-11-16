@@ -42,10 +42,10 @@ function Login() {
       const redirectPaths = {
         1: '/agendamento', // Paciente
         2: '/home',        // Médico
-        3: '/home'         // Administrador
+        3: '/cadastros'    // Administrador
       };
 
-      const redirectPath = redirectPaths[result.user.tipo as keyof typeof redirectPaths] || '/home';
+      const redirectPath = redirectPaths[result.user.tipo as keyof typeof redirectPaths] || (result.user.tipo === 3 ? '/cadastros' : '/home');
       navigate(redirectPath);
       
     } catch (error) {
