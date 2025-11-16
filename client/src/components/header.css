@@ -18,19 +18,20 @@
 .drawer-label-custom {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
+  gap: 12px;
+  padding: 12px 16px;
   background-color: var(--color-navbar);
   background-image: url('../assets/pattern_hexagon.svg');
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 60px;
   height: 48px;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 1001;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Navbar container - CLOSED STATE */
@@ -40,83 +41,67 @@
   left: 0;
   height: calc(100vh - 48px);
   width: 60px;
-  min-width: 60px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: var(--color-navbar);
   background-image: url('../assets/pattern_hexagon.svg');
-  transition: width 0.3s ease, border-right 0.3s ease;
-  overflow: visible;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
   z-index: 1000;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
 }
 
 /* Navbar container - OPEN STATE */
 .drawer-toggle-custom:checked ~ #navbar-container {
   width: 250px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Header button - OPEN STATE */
 .drawer-toggle-custom:checked + .drawer-label-custom {
   width: 250px;
-  justify-content: flex-start;
-  gap: 12px;
-  padding-left: 16px;
-  background-color: var(--color-navbar);
-  background-image: url('../assets/pattern_hexagon.svg');
 }
 
 /* ===== TEXT ANIMATIONS ===== */
 
 /* Text hidden by default */
 .drawer-toggle-text-custom {
-  width: 0;
-  overflow: hidden;
-  white-space: nowrap;
   opacity: 0;
-  transition: all 0.3s ease;
+  transform: translateX(-10px);
+  transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s;
   color: white;
   font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Special handling for user name in closed state */
 .drawer-compact-text {
   display: block;
   color: white;
+  margin-top: 2px;
   white-space: nowrap;
   font-size: 11px;
   font-weight: 600;
   text-align: center;
-  position: relative;
+  max-height: 20px;
+  opacity: 1;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  overflow: hidden;
 }
-
-
 
 /* Text visible when open */
 .drawer-toggle-custom:checked + .drawer-label-custom .drawer-toggle-text-custom,
 .drawer-toggle-custom:checked ~ #navbar-container .drawer-toggle-text-custom {
-  width: auto;
   opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition: opacity 0.3s ease 0.2s, transform 0.3s ease 0.2s;
 }
 
 /* ===== USER INFO STATES ===== */
-
-/* Expanded text (full greeting) */
-.drawer-expanded-text {
-  display: none;
-  color: white;
-}
-
-/* Toggle user info display */
-.drawer-toggle-custom:checked ~ #navbar-container .drawer-compact-text {
-  display: none;
-}
-
-.drawer-toggle-custom:checked ~ #navbar-container .drawer-expanded-text {
-  display: block;
-}
+/* Estados movidos para a seção USER SECTION acima */
 
 /* ===== NAVIGATION BUTTONS ===== */
 
@@ -128,7 +113,7 @@
   margin: 2px 4px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
   text-decoration: none;
   background: none;
   border: none;
@@ -136,24 +121,41 @@
   font-family: inherit;
   color: white;
   font-weight: 500;
-  min-width: 40px;
-  justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .drawer-button:hover,
 .drawer-button:focus {
   background-color: rgba(255, 255, 255, 0.15);
-  transform: translateX(2px);
 }
 
 .drawer-button svg {
   color: white;
-  min-width: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition: none;
 }
 
-/* Adjust button alignment when navbar is open */
-.drawer-toggle-custom:checked ~ #navbar-container .drawer-button {
-  justify-content: flex-start;
+/* Icon container to keep icons stable */
+.drawer-button .icon-container {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Logo container */
+.drawer-label-custom .icon-container {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 /* ===== NAVBAR LAYOUT ===== */
@@ -181,12 +183,14 @@
 }
 
 .user-info {
+  max-height: 36px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   padding: 6px;
   margin-bottom: 12px;
   color: white;
   text-align: center;
+  overflow: hidden;
 }
 
 .user-info .font-medium {
@@ -197,6 +201,39 @@
 .user-info .text-xs {
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* Expanded text (full greeting) */
+.drawer-expanded-text {
+  max-height: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s, padding 0.3s ease, line-height 0.3s ease;
+  color: white;
+  overflow: hidden;
+}
+
+/* Toggle user info display */
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-compact-text {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease;
+}
+
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-expanded-text {
+  opacity: 1;
+  transform: translateX(0);
+  padding: inherit;
+  margin: inherit;
+  line-height: normal;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.2s, transform 0.3s ease 0.2s, padding 0.3s ease, line-height 0.3s ease;
+}
+
+
 
 /* ===== BUTTONS ===== */
 
@@ -244,6 +281,30 @@
   .drawer-toggle-custom:checked + .drawer-label-custom {
     width: 200px;
   }
+}
+
+/* ===== SMOOTH INTERACTIONS ===== */
+
+/* Prevent text selection on buttons */
+.drawer-button,
+.drawer-label-custom {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Improve button stability */
+.drawer-button {
+  will-change: background-color;
+}
+
+#navbar-container {
+  will-change: width;
+}
+
+.drawer-label-custom {
+  will-change: width;
 }
 
 /* ===== PREVENT OVERFLOW ===== */

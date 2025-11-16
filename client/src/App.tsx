@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useEffect } from 'react'
-import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Welcome from './pages/Welcome'
@@ -62,8 +61,7 @@ function App() {
         {isAuthenticated && <BreadCrumb />}
         
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Home /> : <Welcome />} />
-          <Route path="/home" element={isAuthenticated ? <Home /> : <Welcome />} />
+          <Route path="/" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
           <Route path="/agendamento" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
