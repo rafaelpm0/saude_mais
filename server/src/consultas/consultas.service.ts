@@ -88,12 +88,12 @@ export class ConsultasService {
     const diasHabilitados: number[] = [];
 
     // Calcular todos os dias do mês que correspondem aos dias da semana disponíveis
-    const primeiroDia = new Date(ano, mes - 1, 1);
-    const ultimoDia = new Date(ano, mes, 0);
+    const ultimoDia = new Date(ano, mes, 0).getDate();
 
-    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+    for (let dia = 1; dia <= ultimoDia; dia++) {
+      // Criar data local sem problemas de timezone
       const data = new Date(ano, mes - 1, dia);
-      const diaSemana = data.getDay(); // Usar 0-6 como no banco
+      const diaSemana = data.getDay(); // JavaScript: 0=Dom, 1=Seg, 2=Ter, etc.
       
       if (diasSemanaDisponiveis.includes(diaSemana)) {
         diasHabilitados.push(dia);
@@ -120,16 +120,16 @@ export class ConsultasService {
     }
 
     const tempoConsulta = usuarioMedico.tempoConsulta;
-    const dataConsulta = new Date(data);
-    const diaSemana = dataConsulta.getDay(); // Usar 0-6 como no banco
+    // Criar data sem problemas de timezone
+    const partesData = data.split('-');
+    const dataConsulta = new Date(parseInt(partesData[0]), parseInt(partesData[1]) - 1, parseInt(partesData[2]));
+    const diaSemana = dataConsulta.getDay(); // JavaScript: 0=Dom, 1=Seg, 2=Ter, etc.
 
     // Buscar disponibilidade do médico para este dia da semana
-    const disponibilidade = await this.prisma.dispMedico.findUnique({
+    const disponibilidade = await this.prisma.dispMedico.findFirst({
       where: {
-        idUsuario_diaSemana: {
-          idUsuario: idMedico,
-          diaSemana: diaSemana
-        }
+        idUsuario: idMedico,
+        diaSemana: diaSemana
       }
     });
 
@@ -230,6 +230,20 @@ export class ConsultasService {
   // Criar nova consulta
   async criarConsulta(dto: CreateConsultaDto, idCliente: number): Promise<ConsultaResponseDto> {
     const { idMedico, idEspecialidade, idConvenio, dataHora, observacao } = dto;
+
+    // Verificar se o paciente já possui 2 consultas pendentes
+    const consultasPendentes = await this.prisma.consulta.count({
+      where: {
+        agenda: {
+          idCliente: idCliente
+        },
+        status: 'A' // Status ativo (pendente)
+      }
+    });
+
+    if (consultasPendentes >= 2) {
+      throw new BadRequestException('Limite máximo de 2 consultas pendentes atingido. Finalize ou cancele uma consulta antes de agendar outra.');
+    }
 
     // Verificar se o médico atende esta especialidade/convênio
     const usuarioMedico = await this.prisma.usuarioMedico.findFirst({
