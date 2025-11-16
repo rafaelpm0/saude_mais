@@ -149,14 +149,7 @@ export function DataTable<T>({
               )}
             </label>
           ))}
-          <div className="flex items-end justify-end space-x-2">
-            <button
-              onClick={handleClearFilters}
-              className="btn btn-outline btn-info"
-            >
-              Limpar Filtros
-            </button>
-          </div>
+     
         </div>
       </div>
 

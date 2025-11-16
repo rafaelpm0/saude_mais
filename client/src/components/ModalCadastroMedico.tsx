@@ -6,8 +6,6 @@ import {
   useGetConveniosQuery,
   useCreateMedicoMutation,
   useUpdateMedicoMutation,
-  type Especialidade,
-  type Convenio,
   type Medico,
   type MedicoEspecialidade
 } from '../services/endpoints/admin';
@@ -52,6 +50,7 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<MedicoFormData>({
     defaultValues: {
@@ -165,13 +164,9 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
       newConvenios = currentConvenios.filter(id => id !== convenioId);
     }
 
-    // Atualizar o campo usando setValue seria melhor, mas vamos usar uma abordagem mais direta
-    const fieldName = `especialidades.${especialidadeIndex}.convenioIds` as const;
-    const currentValue = watchedEspecialidades[especialidadeIndex];
-    if (currentValue) {
-      currentValue.convenioIds = newConvenios;
-    }
-  }, [watchedEspecialidades]);
+    // Usar setValue para atualizar o campo corretamente
+    setValue(`especialidades.${especialidadeIndex}.convenioIds`, newConvenios);
+  }, [watchedEspecialidades, setValue]);
 
   const onSubmit = async (data: MedicoFormData) => {
     if (isSubmitting) return;
@@ -184,12 +179,19 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
 
     for (let i = 0; i < data.especialidades.length; i++) {
       const esp = data.especialidades[i];
-      if (!esp.especialidadeId || esp.especialidadeId === 0) {
+      const especialidadeId = Number(esp.especialidadeId);
+      const tempoConsulta = Number(esp.tempoConsulta);
+      
+      if (!especialidadeId || especialidadeId === 0) {
         toast.error(`Selecione uma especialidade para a seção ${i + 1}`);
         return;
       }
       if (!esp.convenioIds || esp.convenioIds.length === 0) {
         toast.error(`Selecione pelo menos um convênio para a especialidade ${i + 1}`);
+        return;
+      }
+      if (!tempoConsulta || tempoConsulta < 15) {
+        toast.error(`Tempo de consulta deve ser pelo menos 15 minutos para a especialidade ${i + 1}`);
         return;
       }
     }
@@ -199,9 +201,9 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
       const payload = {
         ...data,
         especialidades: data.especialidades.map(esp => ({
-          especialidadeId: esp.especialidadeId,
-          convenioIds: esp.convenioIds,
-          tempoConsulta: esp.tempoConsulta,
+          especialidadeId: Number(esp.especialidadeId),
+          convenioIds: esp.convenioIds.map(id => Number(id)),
+          tempoConsulta: Number(esp.tempoConsulta),
         })),
       };
 
@@ -392,11 +394,15 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
                   >
                     <span className="font-medium">
                       Especialidade {index + 1}
-                      {watchedEspecialidades[index]?.especialidadeId > 0 && (
-                        <span className="ml-2 text-sm text-gray-600">
-                          ({todasEspecialidades.find(e => e.id === watchedEspecialidades[index].especialidadeId)?.descricao})
-                        </span>
-                      )}
+                      {(() => {
+                        const especialidadeId = watchedEspecialidades[index]?.especialidadeId;
+                        const especialidade = especialidadeId > 0 ? todasEspecialidades.find(e => e.id === especialidadeId) : null;
+                        return especialidade ? (
+                          <span className="ml-2 text-sm text-gray-600">
+                            ({especialidade.descricao})
+                          </span>
+                        ) : null;
+                      })()} 
                     </span>
                     
                     <div className="flex items-center gap-2">
@@ -427,10 +433,15 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
                             <span className="label-text">Especialidade *</span>
                           </label>
                           <select
-                            className="select select-bordered"
+                            className={`select select-bordered ${
+                              errors.especialidades?.[index]?.especialidadeId ? 'select-error' : ''
+                            }`}
                             {...register(`especialidades.${index}.especialidadeId` as const, {
                               required: 'Especialidade é obrigatória',
-                              min: { value: 1, message: 'Selecione uma especialidade' }
+                              validate: (value) => {
+                                const numValue = Number(value);
+                                return numValue > 0 || 'Selecione uma especialidade';
+                              }
                             })}
                           >
                             <option value={0}>Selecione uma especialidade</option>
@@ -440,6 +451,13 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
                               </option>
                             ))}
                           </select>
+                          {errors.especialidades?.[index]?.especialidadeId && (
+                            <label className="label">
+                              <span className="label-text-alt text-error">
+                                {errors.especialidades[index]?.especialidadeId?.message}
+                              </span>
+                            </label>
+                          )}
                         </div>
 
                         <div className="form-control">
@@ -450,13 +468,26 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
                             type="number"
                             min="15"
                             max="120"
-                            className="input input-bordered"
+                            className={`input input-bordered ${
+                              errors.especialidades?.[index]?.tempoConsulta ? 'input-error' : ''
+                            }`}
                             {...register(`especialidades.${index}.tempoConsulta` as const, {
                               required: 'Tempo é obrigatório',
-                              min: { value: 15, message: 'Mínimo 15 minutos' },
-                              max: { value: 120, message: 'Máximo 120 minutos' }
+                              validate: (value) => {
+                                const numValue = Number(value);
+                                if (numValue < 15) return 'Mínimo 15 minutos';
+                                if (numValue > 120) return 'Máximo 120 minutos';
+                                return true;
+                              }
                             })}
                           />
+                          {errors.especialidades?.[index]?.tempoConsulta && (
+                            <label className="label">
+                              <span className="label-text-alt text-error">
+                                {errors.especialidades[index]?.tempoConsulta?.message}
+                              </span>
+                            </label>
+                          )}
                         </div>
                       </div>
 
@@ -465,20 +496,37 @@ function ModalCadastroMedico({ isOpen, onClose, medico }: ModalCadastroMedicoPro
                         <label className="label">
                           <span className="label-text">Convênios Aceitos *</span>
                         </label>
-                        <div className="border border-gray-200 rounded p-3 max-h-40 overflow-y-auto">
+                        <div className="border border-gray-200 rounded p-3 max-h-40 overflow-y-auto bg-gray-50">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {todosConvenios.map((convenio) => (
-                              <label key={convenio.id} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-sm"
-                                  checked={watchedEspecialidades[index]?.convenioIds?.includes(convenio.id) || false}
-                                  onChange={(e) => handleConvenioChange(index, convenio.id, e.target.checked)}
-                                />
-                                <span className="text-sm">{convenio.nome}</span>
-                              </label>
-                            ))}
+                            {todosConvenios.map((convenio) => {
+                              const isSelected = watchedEspecialidades[index]?.convenioIds?.includes(convenio.id) || false;
+                              return (
+                                <label 
+                                  key={convenio.id} 
+                                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
+                                    isSelected 
+                                      ? 'bg-primary/10 border border-primary/20' 
+                                      : 'hover:bg-gray-100 border border-transparent'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="checkbox checkbox-primary checkbox-sm"
+                                    checked={isSelected}
+                                    onChange={(e) => handleConvenioChange(index, convenio.id, e.target.checked)}
+                                  />
+                                  <span className={`text-sm ${isSelected ? 'font-medium text-primary' : ''}`}>
+                                    {convenio.nome}
+                                  </span>
+                                </label>
+                              );
+                            })}
                           </div>
+                          {watchedEspecialidades[index]?.convenioIds?.length === 0 && (
+                            <p className="text-xs text-gray-500 mt-2 text-center">
+                              Selecione pelo menos um convênio
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>

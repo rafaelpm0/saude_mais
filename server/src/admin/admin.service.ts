@@ -69,12 +69,30 @@ export class AdminService {
    * Deletar especialidade
    */
   async deleteEspecialidade(id: number): Promise<void> {
+    // Primeiro verificar se a especialidade existe
+    const especialidade = await this.prisma.especialidade.findUnique({
+      where: { id }
+    });
+
+    if (!especialidade) {
+      throw new NotFoundException('Especialidade não encontrada');
+    }
+
+    // Verificar se há médicos associados
+    const medicosAssociados = await this.prisma.usuarioMedico.count({
+      where: { idEspecialidade: id }
+    });
+
+    if (medicosAssociados > 0) {
+      throw new BadRequestException('Não é possível excluir esta especialidade pois há médicos cadastrados com ela.');
+    }
+
     try {
       await this.prisma.especialidade.delete({
         where: { id }
       });
     } catch (error) {
-      throw new NotFoundException('Especialidade não encontrada');
+      throw new BadRequestException('Erro interno ao excluir especialidade');
     }
   }
 
@@ -130,12 +148,39 @@ export class AdminService {
    * Deletar convênio
    */
   async deleteConvenio(id: number): Promise<void> {
+    // Primeiro verificar se o convênio existe
+    const convenio = await this.prisma.convenio.findUnique({
+      where: { id }
+    });
+
+    if (!convenio) {
+      throw new NotFoundException('Convênio não encontrado');
+    }
+
+    // Verificar se há médicos associados
+    const medicosAssociados = await this.prisma.usuarioMedico.count({
+      where: { idConvenio: id }
+    });
+
+    if (medicosAssociados > 0) {
+      throw new BadRequestException('Não é possível excluir este convênio pois há médicos cadastrados com ele.');
+    }
+
+    // Verificar se há consultas associadas
+    const consultasAssociadas = await this.prisma.consulta.count({
+      where: { idConvenio: id }
+    });
+
+    if (consultasAssociadas > 0) {
+      throw new BadRequestException('Não é possível excluir este convênio pois há consultas registradas com ele.');
+    }
+
     try {
       await this.prisma.convenio.delete({
         where: { id }
       });
     } catch (error) {
-      throw new NotFoundException('Convênio não encontrado');
+      throw new BadRequestException('Erro interno ao excluir convênio');
     }
   }
 
@@ -365,6 +410,24 @@ export class AdminService {
    * Deletar médico
    */
   async deleteMedico(id: number): Promise<void> {
+    // Primeiro verificar se o médico existe
+    const medico = await this.prisma.usuario.findUnique({
+      where: { id, tipo: 2 }
+    });
+
+    if (!medico) {
+      throw new NotFoundException('Médico não encontrado');
+    }
+
+    // Verificar se há agendamentos/consultas associados
+    const agendamentos = await this.prisma.agenda.count({
+      where: { idMedico: id }
+    });
+
+    if (agendamentos > 0) {
+      throw new BadRequestException('Não é possível excluir este médico pois há consultas agendadas ou histórico de atendimentos associados.');
+    }
+
     try {
       await this.prisma.$transaction(async (prisma) => {
         // Deletar relacionamentos primeiro
@@ -378,7 +441,7 @@ export class AdminService {
         });
       });
     } catch (error) {
-      throw new NotFoundException('Médico não encontrado');
+      throw new BadRequestException('Erro interno ao excluir médico');
     }
   }
 }

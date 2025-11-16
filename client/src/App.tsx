@@ -54,7 +54,7 @@ function App() {
       {/* Mostrar Header e BreadCrumb apenas se autenticado */}
       {isAuthenticated && <Header />}
       
-      <main className={`flex flex-col min-h-screen bg-base-300 overflow-hidden ${
+      <main className={`flex flex-col min-h-screen bg-base-300 overflow-auto ${
         isAuthenticated ? 'navbar-layout navbar-closed' : 'w-full'
       }`}>
         

@@ -34,6 +34,13 @@ function Header() {
         <span className="drawer-toggle-text-custom">Clínica Saúde+</span>
       </label>
 
+      {/* Overlay para mobile */}
+      <label 
+        htmlFor="drawer-toggle-custom" 
+        className="navbar-overlay"
+        aria-label="Fechar menu"
+      ></label>
+
       {/* Drawer */}
       <div
         id="navbar-container"

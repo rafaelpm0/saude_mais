@@ -275,11 +275,69 @@
 
 @media (max-width: 768px) {
   .drawer-toggle-custom:checked ~ #navbar-container {
-    width: 200px;
+    width: 280px;
+    max-width: 85vw;
   }
   
   .drawer-toggle-custom:checked + .drawer-label-custom {
-    width: 200px;
+    width: 280px;
+    max-width: 85vw;
+  }
+
+  /* Melhor experiência em telas pequenas */
+  .drawer-button {
+    padding: 10px 12px;
+    margin: 1px 3px;
+    font-size: 13px;
+  }
+
+  .user-section {
+    padding: 6px 3px;
+  }
+
+  .user-info {
+    padding: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* Ajuste do overlay para mobile */
+  .drawer-toggle-custom:checked ~ #navbar-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .drawer-toggle-custom:checked ~ #navbar-container {
+    width: 260px;
+    max-width: 90vw;
+  }
+  
+  .drawer-toggle-custom:checked + .drawer-label-custom {
+    width: 260px;
+    max-width: 90vw;
+  }
+
+  .drawer-button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .drawer-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .drawer-button .icon-container {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -317,4 +375,58 @@ body {
 .drawer-label-custom {
   max-width: 100vw;
   box-sizing: border-box;
+}
+
+/* ===== MOBILE OVERLAY ===== */
+
+/* Overlay para mobile quando menu está aberto */
+@media (max-width: 768px) {
+  .navbar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .drawer-toggle-custom:checked ~ .navbar-overlay {
+    display: block;
+  }
+
+  /* Melhor z-index para elementos do navbar em mobile */
+  .drawer-toggle-custom:checked ~ #navbar-container {
+    z-index: 1002;
+  }
+
+  .drawer-toggle-custom:checked + .drawer-label-custom {
+    z-index: 1003;
+  }
+}
+
+/* ===== IMPROVED INTERACTIONS ===== */
+
+/* Melhor feedback visual para botões */
+.drawer-button:active {
+  transform: translateY(1px);
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.drawer-label-custom:active {
+  transform: translateY(1px);
+}
+
+/* Smooth focus states */
+.drawer-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.drawer-label-custom:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
