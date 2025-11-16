@@ -63,6 +63,7 @@ model UsuarioMedico {
   idUsuario       Int
   idEspecialidade Int
   idConvenio      Int
+  tempoConsulta   Int  // Tempo em minutos para consultas desta especialidade
 
   medico        Usuario        @relation(fields: [idUsuario], references: [id])
   especialidade Especialidade  @relation(fields: [idEspecialidade], references: [id])
@@ -94,7 +95,7 @@ model Agenda {
   idCliente  Int
   dtaInicial DateTime
   dtaFinal   DateTime
-  status     String
+  status     String  //  ‘A’ para ativo, ‘F’ para finalizado/atendido, ‘C’ cancelado, ‘N’ não comparecimento
 
   medico  Usuario @relation("AgendaMedico", fields: [idMedico], references: [id])
   cliente Usuario @relation("AgendaCliente", fields: [idCliente], references: [id])

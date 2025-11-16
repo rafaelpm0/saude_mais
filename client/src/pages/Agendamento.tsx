@@ -1,8 +1,78 @@
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import type { RootState } from '../app/store';
+import ModalAgendamento from '../components/ModalAgendamento';
+import ModalRemarcarSimples from '../components/ModalRemarcarSimples';
+import { 
+  useGetMinhasConsultasQuery,
+  useCancelarConsultaMutation,
+  type ConsultaResponse 
+} from '../services/endpoints/consultas';
 
 function Agendamento() {
   const { user } = useSelector((state: RootState) => state.auth);
+  const [modalAgendamentoOpen, setModalAgendamentoOpen] = useState(false);
+  const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
+  const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
+  const [modalRemarcarOpen, setModalRemarcarOpen] = useState(false);
+  const [consultaSelecionada, setConsultaSelecionada] = useState<ConsultaResponse | null>(null);
+
+  // Queries
+  const { data: minhasConsultas = [], refetch } = useGetMinhasConsultasQuery();
+  const [cancelarConsulta] = useCancelarConsultaMutation();
+
+  // Filtrar consultas ativas (futuras)
+  const consultasFuturas = minhasConsultas.filter(consulta => {
+    const dataConsulta = new Date(consulta.agenda.dtaInicial);
+    const agora = new Date();
+    return dataConsulta > agora && consulta.status === 'A';
+  });
+
+  // Filtrar histórico (passadas ou canceladas)
+  const historicoConsultas = minhasConsultas.filter(consulta => {
+    const dataConsulta = new Date(consulta.agenda.dtaInicial);
+    const agora = new Date();
+    return dataConsulta <= agora || consulta.status !== 'A';
+  });
+
+  const handleConsultaClick = (consulta: ConsultaResponse) => {
+    setConsultaSelecionada(consulta);
+    setModalDetalhesOpen(true);
+  };
+
+  const handleCancelarConsulta = async (consultaId: number) => {
+    try {
+      await cancelarConsulta(consultaId).unwrap();
+      toast.success('Consulta cancelada com sucesso!');
+      setModalDetalhesOpen(false);
+      refetch();
+    } catch (error) {
+      const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Erro ao cancelar consulta';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleRemarcarConsulta = (consulta: ConsultaResponse) => {
+    setConsultaSelecionada(consulta);
+    setModalDetalhesOpen(false);
+    setModalRemarcarOpen(true);
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('pt-BR'),
+      time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    };
+  };
+
+  const canEditOrCancel = (dataConsulta: string) => {
+    const consulta = new Date(dataConsulta);
+    const agora = new Date();
+    const horasAntecedencia = (consulta.getTime() - agora.getTime()) / (1000 * 60 * 60);
+    return horasAntecedencia >= 24;
+  };
 
   return (
     <div className="flex flex-col p-6">
@@ -28,7 +98,10 @@ function Agendamento() {
                 <p className="text-sm text-gray-600">Agende uma nova consulta</p>
               </div>
             </div>
-            <button className="btn btn-primary w-full">
+            <button 
+              className="btn btn-primary w-full"
+              onClick={() => setModalAgendamentoOpen(true)}
+            >
               Agendar Consulta
             </button>
           </div>
@@ -45,11 +118,37 @@ function Agendamento() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">Próximas Consultas</h3>
-                <p className="text-sm text-gray-600">Consultas agendadas</p>
+                <p className="text-sm text-gray-600">{consultasFuturas.length} consulta(s) agendada(s)</p>
               </div>
             </div>
-            <div className="text-center py-4">
-              <p className="text-gray-500">Nenhuma consulta agendada</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {consultasFuturas.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">Nenhuma consulta agendada</p>
+                </div>
+              ) : (
+                consultasFuturas.map((consulta) => {
+                  const { date, time } = formatDateTime(consulta.agenda.dtaInicial);
+                  return (
+                    <div
+                      key={consulta.id}
+                      onClick={() => handleConsultaClick(consulta)}
+                      className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-sm">{consulta.agenda.medico.nome}</p>
+                          <p className="text-xs text-gray-600">{consulta.convenio.nome}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-medium text-blue-600">{date}</p>
+                          <p className="text-xs text-gray-600">{time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -65,10 +164,13 @@ function Agendamento() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">Histórico</h3>
-                <p className="text-sm text-gray-600">Consultas anteriores</p>
+                <p className="text-sm text-gray-600">{historicoConsultas.length} consulta(s) no histórico</p>
               </div>
             </div>
-            <button className="btn btn-outline w-full">
+            <button 
+              className="btn btn-outline w-full"
+              onClick={() => setModalHistoricoOpen(true)}
+            >
               Ver Histórico
             </button>
           </div>
@@ -103,6 +205,162 @@ function Agendamento() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Agendamento */}
+      <ModalAgendamento
+        isOpen={modalAgendamentoOpen}
+        onClose={() => setModalAgendamentoOpen(false)}
+        onSuccess={() => refetch()}
+      />
+
+      {/* Modal de Detalhes da Consulta */}
+      {modalDetalhesOpen && consultaSelecionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Detalhes da Consulta</h2>
+                <button
+                  onClick={() => setModalDetalhesOpen(false)}
+                  className="btn btn-ghost btn-sm btn-circle"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Médico</label>
+                  <p className="text-gray-800">{consultaSelecionada.agenda.medico.nome}</p>
+                  <p className="text-sm text-gray-600">{consultaSelecionada.agenda.medico.crm}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Data e Horário</label>
+                  <p className="text-gray-800">
+                    {formatDateTime(consultaSelecionada.agenda.dtaInicial).date} às {formatDateTime(consultaSelecionada.agenda.dtaInicial).time}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Convênio</label>
+                  <p className="text-gray-800">{consultaSelecionada.convenio.nome}</p>
+                </div>
+
+
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Status</label>
+                  <p className={`text-sm font-semibold ${
+                    consultaSelecionada.status === 'A' ? 'text-green-600' : 
+                    consultaSelecionada.status === 'C' ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                    {consultaSelecionada.status === 'A' ? 'Ativo' : 
+                     consultaSelecionada.status === 'C' ? 'Cancelado' : 'Finalizado'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-6 border-t">
+                <button
+                  onClick={() => setModalDetalhesOpen(false)}
+                  className="btn btn-outline"
+                >
+                  Fechar
+                </button>
+                {consultaSelecionada.status === 'A' && canEditOrCancel(consultaSelecionada.agenda.dtaInicial) && (
+                  <>
+                    <button
+                      onClick={() => handleRemarcarConsulta(consultaSelecionada)}
+                      className="btn btn-warning"
+                    >
+                      Remarcar
+                    </button>
+                    <button
+                      onClick={() => handleCancelarConsulta(consultaSelecionada.id)}
+                      className="btn btn-error"
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Histórico */}
+      {modalHistoricoOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Histórico de Consultas</h2>
+                <button
+                  onClick={() => setModalHistoricoOpen(false)}
+                  className="btn btn-ghost btn-sm btn-circle"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {historicoConsultas.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">Nenhuma consulta no histórico</p>
+                ) : (
+                  historicoConsultas.map((consulta) => {
+                    const { date, time } = formatDateTime(consulta.agenda.dtaInicial);
+                    return (
+                      <div
+                        key={consulta.id}
+                        className="p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold">{consulta.agenda.medico.nome}</p>
+                            <p className="text-sm text-gray-600">{consulta.convenio.nome}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{date}</p>
+                            <p className="text-sm text-gray-600">{time}</p>
+                            <p className={`text-xs font-semibold mt-1 ${
+                              consulta.status === 'F' ? 'text-blue-600' : 
+                              consulta.status === 'C' ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {consulta.status === 'F' ? 'Finalizada' : 
+                               consulta.status === 'C' ? 'Cancelada' : 'Não compareceu'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <button
+                  onClick={() => setModalHistoricoOpen(false)}
+                  className="btn btn-outline"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Remarcar */}
+      {modalRemarcarOpen && consultaSelecionada && (
+        <ModalRemarcarSimples
+          isOpen={modalRemarcarOpen}
+          onClose={() => setModalRemarcarOpen(false)}
+          onSuccess={() => refetch()}
+          consulta={consultaSelecionada}
+        />
+      )}
     </div>
   );
 }

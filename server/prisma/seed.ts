@@ -7,15 +7,59 @@ async function seed() {
   try {
     console.log('🌱 Iniciando seed do banco de dados...');
 
-    // Limpar usuários existentes (opcional)
+    // Limpar dados existentes
+    await prisma.consulta.deleteMany();
+    await prisma.agenda.deleteMany();
+    await prisma.usuarioMedico.deleteMany();
+    await prisma.dispMedico.deleteMany();
     await prisma.usuario.deleteMany();
-    console.log('🗑️ Usuários existentes removidos');
+    await prisma.especialidade.deleteMany();
+    await prisma.convenio.deleteMany();
+    console.log('🗑️ Dados existentes removidos');
 
     // Hash da senha padrão "12345678" para todos os usuários
     const hashedPassword = await bcrypt.hash('12345678', 10);
 
-    // 1. Usuário Paciente
-    const paciente = await prisma.usuario.create({
+    // 1. Criar Especialidades
+    const especialidades = await Promise.all([
+      prisma.especialidade.create({
+        data: { id: 1, descricao: 'Clínica Geral' }
+      }),
+      prisma.especialidade.create({
+        data: { id: 2, descricao: 'Cardiologia' }
+      }),
+      prisma.especialidade.create({
+        data: { id: 3, descricao: 'Dermatologia' }
+      }),
+      prisma.especialidade.create({
+        data: { id: 4, descricao: 'Pediatria' }
+      }),
+      prisma.especialidade.create({
+        data: { id: 5, descricao: 'Ortopedia' }
+      })
+    ]);
+
+    // 2. Criar Convênios
+    const convenios = await Promise.all([
+      prisma.convenio.create({
+        data: { id: 1, nome: 'SUS' }
+      }),
+      prisma.convenio.create({
+        data: { id: 2, nome: 'Unimed' }
+      }),
+      prisma.convenio.create({
+        data: { id: 3, nome: 'Bradesco Saúde' }
+      }),
+      prisma.convenio.create({
+        data: { id: 4, nome: 'Amil' }
+      }),
+      prisma.convenio.create({
+        data: { id: 5, nome: 'Particular' }
+      })
+    ]);
+
+    // 3. Criar Usuários
+    const paciente1 = await prisma.usuario.create({
       data: {
         login: 'paciente@teste.com',
         senha: hashedPassword,
@@ -29,8 +73,21 @@ async function seed() {
       },
     });
 
-    // 2. Usuário Médico
-    const medico = await prisma.usuario.create({
+    const paciente2 = await prisma.usuario.create({
+      data: {
+        login: 'maria.paciente@teste.com',
+        senha: hashedPassword,
+        tipo: 1,
+        crm: null,
+        faltasConsecutivas: 0,
+        cpf: '44444444444',
+        nome: 'Maria Oliveira',
+        telefone: '11888888888',
+        email: 'maria.paciente@teste.com',
+      },
+    });
+
+    const medico1 = await prisma.usuario.create({
       data: {
         login: 'medico@teste.com',
         senha: hashedPassword,
@@ -38,13 +95,26 @@ async function seed() {
         crm: 'CRM12345',
         faltasConsecutivas: 0,
         cpf: '22222222222',
-        nome: 'Dra. Maria Santos',
-        telefone: '11888888888',
+        nome: 'Dra. Ana Santos',
+        telefone: '11777777777',
         email: 'medico@teste.com',
       },
     });
 
-    // 3. Usuário Administrador
+    const medico2 = await prisma.usuario.create({
+      data: {
+        login: 'carlos.medico@teste.com',
+        senha: hashedPassword,
+        tipo: 2,
+        crm: 'CRM54321',
+        faltasConsecutivas: 0,
+        cpf: '55555555555',
+        nome: 'Dr. Carlos Pereira',
+        telefone: '11666666666',
+        email: 'carlos.medico@teste.com',
+      },
+    });
+
     const admin = await prisma.usuario.create({
       data: {
         login: 'admin@teste.com',
@@ -54,17 +124,237 @@ async function seed() {
         faltasConsecutivas: 0,
         cpf: '33333333333',
         nome: 'Carlos Oliveira',
-        telefone: '11777777777',
+        telefone: '11555555555',
         email: 'admin@teste.com',
       },
     });
 
-    console.log('✅ Usuários criados com sucesso:');
-    console.log(`👤 Paciente: ${paciente.nome} (${paciente.email})`);
-    console.log(`👨‍⚕️ Médico: ${medico.nome} (${medico.email})`);
-    console.log(`👨‍💼 Admin: ${admin.nome} (${admin.email})`);
+    // 4. Criar UsuarioMedico (Especialidades + Convênios + Tempo de Consulta)
+    await Promise.all([
+      // Dra. Ana Santos - Clínica Geral
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          idEspecialidade: 1, // Clínica Geral
+          idConvenio: 1, // SUS
+          tempoConsulta: 30 // 30 minutos
+        }
+      }),
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          idEspecialidade: 1, // Clínica Geral
+          idConvenio: 2, // Unimed
+          tempoConsulta: 30
+        }
+      }),
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          idEspecialidade: 1, // Clínica Geral
+          idConvenio: 5, // Particular
+          tempoConsulta: 45 // Particular tem mais tempo
+        }
+      }),
+      // Dra. Ana Santos - Cardiologia
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          idEspecialidade: 2, // Cardiologia
+          idConvenio: 2, // Unimed
+          tempoConsulta: 60 // Cardiologia precisa de mais tempo
+        }
+      }),
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          idEspecialidade: 2, // Cardiologia
+          idConvenio: 5, // Particular
+          tempoConsulta: 60
+        }
+      }),
+      // Dr. Carlos Pereira - Pediatria
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          idEspecialidade: 4, // Pediatria
+          idConvenio: 1, // SUS
+          tempoConsulta: 45
+        }
+      }),
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          idEspecialidade: 4, // Pediatria
+          idConvenio: 3, // Bradesco
+          tempoConsulta: 45
+        }
+      }),
+      // Dr. Carlos Pereira - Ortopedia
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          idEspecialidade: 5, // Ortopedia
+          idConvenio: 3, // Bradesco
+          tempoConsulta: 60
+        }
+      }),
+      prisma.usuarioMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          idEspecialidade: 5, // Ortopedia
+          idConvenio: 4, // Amil
+          tempoConsulta: 60
+        }
+      })
+    ]);
+
+    // 5. Criar Disponibilidades dos Médicos
+    await Promise.all([
+      // Dra. Ana Santos - Segunda a Sexta, 8h às 17h
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          diaSemana: 1, // Segunda
+          horaInicio: '08:00',
+          horaFim: '17:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          diaSemana: 2, // Terça
+          horaInicio: '08:00',
+          horaFim: '17:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          diaSemana: 3, // Quarta
+          horaInicio: '08:00',
+          horaFim: '17:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          diaSemana: 4, // Quinta
+          horaInicio: '08:00',
+          horaFim: '17:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico1.id,
+          diaSemana: 5, // Sexta
+          horaInicio: '08:00',
+          horaFim: '12:00'
+        }
+      }),
+      // Dr. Carlos Pereira - Terça, Quinta e Sábado
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          diaSemana: 2, // Terça
+          horaInicio: '14:00',
+          horaFim: '18:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          diaSemana: 4, // Quinta
+          horaInicio: '14:00',
+          horaFim: '18:00'
+        }
+      }),
+      prisma.dispMedico.create({
+        data: {
+          idUsuario: medico2.id,
+          diaSemana: 6, // Sábado
+          horaInicio: '08:00',
+          horaFim: '12:00'
+        }
+      })
+    ]);
+
+    // 6. Criar algumas Agendas e Consultas de exemplo
+    const dataAmanha = new Date();
+    dataAmanha.setDate(dataAmanha.getDate() + 1);
+    dataAmanha.setHours(9, 0, 0, 0);
+
+    const dataProximaSemana = new Date();
+    dataProximaSemana.setDate(dataProximaSemana.getDate() + 7);
+    dataProximaSemana.setHours(14, 0, 0, 0);
+
+    const agenda1 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente1.id,
+        dtaInicial: dataAmanha,
+        dtaFinal: new Date(dataAmanha.getTime() + 30 * 60000), // +30 minutos
+        status: 'A' // Ativo
+      }
+    });
+
+    const agenda2 = await prisma.agenda.create({
+      data: {
+        idMedico: medico2.id,
+        idCliente: paciente2.id,
+        dtaInicial: dataProximaSemana,
+        dtaFinal: new Date(dataProximaSemana.getTime() + 45 * 60000), // +45 minutos
+        status: 'A'
+      }
+    });
+
+    await Promise.all([
+      prisma.consulta.create({
+        data: {
+          idAgenda: agenda1.id,
+          idConvenio: 1, // SUS
+          observacao: 'Consulta de rotina - check-up geral',
+          status: 'A'
+        }
+      }),
+      prisma.consulta.create({
+        data: {
+          idAgenda: agenda2.id,
+          idConvenio: 1, // SUS
+          observacao: 'Consulta pediátrica - acompanhamento do crescimento',
+          status: 'A'
+        }
+      })
+    ]);
+
+    console.log('✅ Seed executado com sucesso!');
+    console.log('\n📊 Dados criados:');
+    console.log(`📋 ${especialidades.length} Especialidades`);
+    console.log(`🏥 ${convenios.length} Convênios`);
+    console.log(`👤 3 Pacientes, 2 Médicos, 1 Admin`);
+    console.log(`👨‍⚕️ 9 Combinações Médico+Especialidade+Convênio`);
+    console.log(`📅 8 Disponibilidades configuradas`);
+    console.log(`📝 2 Consultas agendadas`);
+    
+    console.log('\n👨‍⚕️ Médicos e suas especialidades:');
+    console.log('• Dra. Ana Santos (CRM12345):');
+    console.log('  - Clínica Geral: SUS (30min), Unimed (30min), Particular (45min)');
+    console.log('  - Cardiologia: Unimed (60min), Particular (60min)');
+    console.log('  - Disponível: Seg-Sex 8h-17h (Sex até 12h)');
+    console.log('• Dr. Carlos Pereira (CRM54321):');
+    console.log('  - Pediatria: SUS (45min), Bradesco (45min)');
+    console.log('  - Ortopedia: Bradesco (60min), Amil (60min)');
+    console.log('  - Disponível: Ter-Qui 14h-18h, Sáb 8h-12h');
+
     console.log('\n📋 Credenciais para teste:');
-    console.log('Email/CPF: Use qualquer um dos emails acima ou CPFs (11111111111, 22222222222, 33333333333)');
+    console.log('Pacientes:');
+    console.log('• paciente@teste.com ou CPF: 11111111111 (João Silva)');
+    console.log('• maria.paciente@teste.com ou CPF: 44444444444 (Maria Oliveira)');
+    console.log('Médicos:');
+    console.log('• medico@teste.com ou CPF: 22222222222 (Dra. Ana Santos)');
+    console.log('• carlos.medico@teste.com ou CPF: 55555555555 (Dr. Carlos Pereira)');
+    console.log('Admin:');
+    console.log('• admin@teste.com ou CPF: 33333333333 (Carlos Oliveira)');
     console.log('Senha: 12345678 (para todos os usuários)');
 
   } catch (error) {
