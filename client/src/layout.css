@@ -1,0 +1,30 @@
+/* Layout adjustments for navbar states */
+.navbar-layout {
+  transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+/* When navbar is closed (default) */
+.navbar-closed {
+  margin-left: 60px;
+  width: calc(100vw - 60px);
+  padding-top: 48px;
+}
+
+/* When navbar is open */
+.navbar-open {
+  margin-left: 250px;
+  width: calc(100vw - 250px);
+  padding-top: 48px;
+}
+
+@media (max-width: 768px) {
+  .navbar-open {
+    margin-left: 200px;
+    width: calc(100vw - 200px);
+  }
+  
+  .navbar-closed {
+    margin-left: 60px;
+    width: calc(100vw - 60px);
+  }
+}

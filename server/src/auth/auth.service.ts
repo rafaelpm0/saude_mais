@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
-import { LoginDto, AuthResponseDto } from './dto/auth.dto';
+import { LoginDto, AuthResponseDto, RegisterDto, RegisterResponseDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -63,6 +63,47 @@ export class AuthService {
         tipo: user.tipo,
         nomeTipo,
       },
+    };
+  }
+
+  async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
+    const { nome, cpf, email, telefone, senha, tipo } = registerDto;
+
+    // Verificar se já existe usuário com esse CPF ou email
+    const existingUser = await this.prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { cpf: cpf },
+          { email: email },
+        ],
+      },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Usuário já existe com este CPF ou email');
+    }
+
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(senha, 10);
+
+    // Criar usuário
+    const user = await this.prisma.usuario.create({
+      data: {
+        nome,
+        cpf,
+        email,
+        telefone,
+        senha: hashedPassword,
+        tipo,
+        login: cpf, // usando CPF como login
+        crm: tipo === 2 ? '' : null, // apenas médicos têm CRM
+        faltasConsecutivas: tipo === 1 ? 0 : 0, // apenas pacientes têm faltas
+      },
+    });
+
+    return {
+      message: 'Usuário cadastrado com sucesso',
+      id: user.id,
     };
   }
 

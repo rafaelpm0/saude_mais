@@ -18,8 +18,8 @@ async function bootstrap() {
 
   // Configuração do Swagger
   const config = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription('API Description')
+    .setTitle('Clínica Saúde+ API')
+    .setDescription('API do sistema de gestão da Clínica Saúde+')
     .setVersion('1.0')
     .build();
   

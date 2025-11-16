@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useLoginMutation } from '../services/endpoints/auth';
 import { loginSuccess } from '../app/authSlice';
@@ -11,6 +12,7 @@ interface LoginFormData {
 
 function Login() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [loginMutation, { isLoading }] = useLoginMutation();
   
   const {
@@ -35,6 +37,16 @@ function Login() {
         position: "top-right",
         autoClose: 4000,
       });
+
+      // Redirecionamento baseado no tipo de usuário
+      const redirectPaths = {
+        1: '/agendamento', // Paciente
+        2: '/home',        // Médico
+        3: '/home'         // Administrador
+      };
+
+      const redirectPath = redirectPaths[result.user.tipo as keyof typeof redirectPaths] || '/home';
+      navigate(redirectPath);
       
     } catch (error) {
       const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Erro ao fazer login';
@@ -46,15 +58,18 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
+      <div className="card w-full max-w-md bg-white shadow-2xl">
         <div className="card-body">
-          <h2 className="card-title text-center text-2xl font-bold mb-6">Login</h2>
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold text-blue-700 mb-2">Login</h2>
+            <p className="text-gray-600">Clínica Saúde+</p>
+          </div>
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">CPF ou Email</span>
+                <span className="label-text font-medium">CPF ou Email</span>
               </label>
               <input
                 type="text"
@@ -77,7 +92,7 @@ function Login() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Senha</span>
+                <span className="label-text font-medium">Senha</span>
               </label>
               <input
                 type="password"
@@ -106,7 +121,7 @@ function Login() {
               )}
             </div>
 
-            <div className="form-control mt-6">
+            <div className="form-control mt-6 space-y-3">
               <button
                 type="submit"
                 className={`btn btn-primary w-full ${isLoading ? 'loading' : ''}`}
@@ -114,6 +129,27 @@ function Login() {
               >
                 {isLoading ? 'Entrando...' : 'Entrar'}
               </button>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">Não tem conta?</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/register')}
+                  className="btn btn-outline w-full"
+                >
+                  Cadastrar como Paciente
+                </button>
+              </div>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  ← Voltar à página inicial
+                </button>
+              </div>
             </div>
           </form>
         </div>

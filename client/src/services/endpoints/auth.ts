@@ -5,6 +5,15 @@ export interface LoginRequest {
   senha: string;
 }
 
+export interface RegisterRequest {
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  senha: string;
+  tipo: number;
+}
+
 export interface LoginResponse {
   access_token: string;
   user: {
@@ -13,6 +22,11 @@ export interface LoginResponse {
     tipo: number;
     nomeTipo: string;
   };
+}
+
+export interface RegisterResponse {
+  message: string;
+  id: number;
 }
 
 export const authApi = api.injectEndpoints({
@@ -24,8 +38,15 @@ export const authApi = api.injectEndpoints({
         body: credentials,
       }),
     }),
+    register: builder.mutation<RegisterResponse, RegisterRequest>({
+      query: (userData) => ({
+        url: 'auth/register',
+        method: 'POST',
+        body: userData,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useLoginMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation } = authApi;

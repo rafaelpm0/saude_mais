@@ -5,13 +5,19 @@ export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({ 
     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/',
-    prepareHeaders: (headers, { getState }) => {
+    prepareHeaders: (headers, { getState, endpoint }) => {
       headers.set('Content-Type', 'application/json');
       
-      // Incluir token de autenticação se disponível
-      const token = (getState() as RootState).auth.token;
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
+      // Não incluir token para rotas de autenticação (login e register)
+      const authRoutes = ['login', 'register'];
+      const isAuthRoute = authRoutes.some(route => endpoint?.includes(route));
+      
+      // Incluir token de autenticação apenas se disponível e não for rota de auth
+      if (!isAuthRoute) {
+        const token = (getState() as RootState).auth.token;
+        if (token) {
+          headers.set('authorization', `Bearer ${token}`);
+        }
       }
       
       return headers;

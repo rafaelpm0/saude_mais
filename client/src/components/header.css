@@ -1,54 +1,259 @@
+/* ===== NAVBAR STATES ===== */
+
+/* Hide checkbox */
 .drawer-toggle-custom {
   display: none;
 }
 
+/* Main navbar container wrapper */
+.navbar-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 999;
+}
+
+/* Header button */
 .drawer-label-custom {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding: 12px;
+  background-color: var(--color-navbar);
+  background-image: url('../assets/pattern_hexagon.svg');
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 60px;
+  height: 48px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1001;
 }
 
+/* Navbar container - CLOSED STATE */
+#navbar-container {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  height: calc(100vh - 48px);
+  width: 60px;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--color-navbar);
+  background-image: url('../assets/pattern_hexagon.svg');
+  transition: width 0.3s ease, border-right 0.3s ease;
+  overflow: visible;
+  z-index: 1000;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navbar container - OPEN STATE */
+.drawer-toggle-custom:checked ~ #navbar-container {
+  width: 250px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Header button - OPEN STATE */
+.drawer-toggle-custom:checked + .drawer-label-custom {
+  width: 250px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding-left: 16px;
+  background-color: var(--color-navbar);
+  background-image: url('../assets/pattern_hexagon.svg');
+}
+
+/* ===== TEXT ANIMATIONS ===== */
+
+/* Text hidden by default */
 .drawer-toggle-text-custom {
   width: 0;
   overflow: hidden;
   white-space: nowrap;
-  transition: width 0.4s ease-out, opacity 0.4s ease-out;
   opacity: 0;
+  transition: all 0.3s ease;
+  color: white;
+  font-weight: 500;
 }
 
-.drawer-toggle-custom:checked + .drawer-label-custom .drawer-toggle-text-custom,
-.drawer-toggle-custom:checked ~ #navbar-container #navbar .drawer-toggle-text-custom {
-  width: 200px;
-  opacity: 1;
-  transition: width 0.6s ease-in, opacity 0.6s ease-in;
+/* Special handling for user name in closed state */
+.drawer-compact-text {
+  display: block;
+  color: white;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  position: relative;
 }
+
+
+
+/* Text visible when open */
+.drawer-toggle-custom:checked + .drawer-label-custom .drawer-toggle-text-custom,
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-toggle-text-custom {
+  width: auto;
+  opacity: 1;
+}
+
+/* ===== USER INFO STATES ===== */
+
+/* Expanded text (full greeting) */
+.drawer-expanded-text {
+  display: none;
+  color: white;
+}
+
+/* Toggle user info display */
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-compact-text {
+  display: none;
+}
+
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-expanded-text {
+  display: block;
+}
+
+/* ===== NAVIGATION BUTTONS ===== */
 
 .drawer-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  gap: 12px;
+  padding: 12px;
+  margin: 2px 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   text-decoration: none;
-  color: inherit;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: white;
+  font-weight: 500;
+  min-width: 40px;
+  justify-content: center;
 }
-
 
 .drawer-button:hover,
 .drawer-button:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(2px);
+}
+
+.drawer-button svg {
+  color: white;
+  min-width: 20px;
+}
+
+/* Adjust button alignment when navbar is open */
+.drawer-toggle-custom:checked ~ #navbar-container .drawer-button {
+  justify-content: flex-start;
+}
+
+/* ===== NAVBAR LAYOUT ===== */
+
+#navbar {
+  flex: 1;
+  padding-top: 16px;
+}
+
+#navbar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#navbar li {
+  margin-bottom: 4px;
+}
+
+/* ===== USER SECTION ===== */
+
+.user-section {
+  padding: 8px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
   background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 12px;
+  color: white;
+  text-align: center;
 }
 
-#navar {
-  height: 100%;
+.user-info .font-medium {
+  color: white;
+  font-weight: 600;
 }
 
-#navbar-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-image: url('../assets/pattern_hexagon.svg');
+.user-info .text-xs {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== BUTTONS ===== */
+
+.logout-btn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.logout-btn:hover {
+  background-color: #dc2626;
+}
+
+.login-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.login-btn:hover {
+  background-color: #2563eb;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+
+@media (max-width: 768px) {
+  .drawer-toggle-custom:checked ~ #navbar-container {
+    width: 200px;
+  }
+  
+  .drawer-toggle-custom:checked + .drawer-label-custom {
+    width: 200px;
+  }
+}
+
+/* ===== PREVENT OVERFLOW ===== */
+
+body {
+  overflow-x: hidden;
+}
+
+#navbar-container,
+.drawer-label-custom {
+  max-width: 100vw;
+  box-sizing: border-box;
 }
