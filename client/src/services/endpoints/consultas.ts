@@ -93,7 +93,7 @@ export const consultasApi = api.injectEndpoints({
     // Buscar médicos por especialidade
     getMedicosByEspecialidade: builder.query<Medico[], number>({
       query: (especialidadeId) => `consultas/especialidades/${especialidadeId}/medicos`,
-      providesTags: (result, error, especialidadeId) => [
+      providesTags: (_, __, especialidadeId) => [
         { type: 'Medico', id: especialidadeId }
       ],
     }),
@@ -102,7 +102,7 @@ export const consultasApi = api.injectEndpoints({
     getConveniosByMedicoEspecialidade: builder.query<Convenio[], { medicoId: number; especialidadeId: number }>({
       query: ({ medicoId, especialidadeId }) => 
         `consultas/medicos/${medicoId}/especialidades/${especialidadeId}/convenios`,
-      providesTags: (result, error, { medicoId, especialidadeId }) => [
+      providesTags: (_, __, { medicoId, especialidadeId }) => [
         { type: 'Convenio', id: `${medicoId}-${especialidadeId}` }
       ],
     }),
@@ -111,7 +111,7 @@ export const consultasApi = api.injectEndpoints({
     getDiasHabilitados: builder.query<DiasHabilitados, { medicoId: number; ano: number; mes: number }>({
       query: ({ medicoId, ano, mes }) => 
         `consultas/medicos/${medicoId}/calendario?ano=${ano}&mes=${mes}`,
-      providesTags: (result, error, { medicoId, ano, mes }) => [
+      providesTags: (_, __, { medicoId, ano, mes }) => [
         { type: 'Calendario', id: `${medicoId}-${ano}-${mes}` }
       ],
     }),
@@ -144,7 +144,7 @@ export const consultasApi = api.injectEndpoints({
     // Buscar consulta por ID
     getConsultaById: builder.query<ConsultaResponse, number>({
       query: (id) => `consultas/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Consulta', id }],
+      providesTags: (_, __, id) => [{ type: 'Consulta', id }],
     }),
 
     // Atualizar consulta
@@ -154,7 +154,7 @@ export const consultasApi = api.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_, __, { id }) => [
         { type: 'Consulta', id },
         'Consulta',
         'Calendario'
@@ -167,7 +167,7 @@ export const consultasApi = api.injectEndpoints({
         url: `consultas/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [
+      invalidatesTags: (_, __, id) => [
         { type: 'Consulta', id },
         'Consulta',
         'Calendario'

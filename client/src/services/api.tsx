@@ -8,6 +8,10 @@ export const api = createApi({
     prepareHeaders: (headers, { getState, endpoint }) => {
       headers.set('Content-Type', 'application/json');
       
+      // Bypass do localtunnel - evita página de senha
+      headers.set('bypass-tunnel-reminder', 'true');
+      headers.set('User-Agent', 'SaudeMaisApp/1.0');
+      
       // Não incluir token para rotas de autenticação (login e register)
       const authRoutes = ['login', 'register'];
       const isAuthRoute = authRoutes.some(route => endpoint?.includes(route));

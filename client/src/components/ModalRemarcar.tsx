@@ -49,17 +49,17 @@ function ModalRemarcar({ isOpen, onClose, onSuccess, consulta }: ModalRemarcarPr
   // Estados para controlar seleções
   const especialidadeSelecionada = watch('especialidade');
   const medicoSelecionado = watch('medico');
-  const convenioSelecionado = watch('convenio');
+  // const convenioSelecionado = watch('convenio');
   
   // Queries
-  const { data: especialidades } = useGetEspecialidadesQuery();
+  const { data: _especialidades } = useGetEspecialidadesQuery();
   
-  const { data: medicos } = useGetMedicosByEspecialidadeQuery(
+  const { data: _medicos } = useGetMedicosByEspecialidadeQuery(
     parseInt(especialidadeSelecionada), 
     { skip: !especialidadeSelecionada }
   );
   
-  const { data: convenios } = useGetConveniosByMedicoEspecialidadeQuery(
+  const { data: _convenios } = useGetConveniosByMedicoEspecialidadeQuery(
     { 
       medicoId: parseInt(medicoSelecionado), 
       especialidadeId: parseInt(especialidadeSelecionada) 
@@ -94,8 +94,8 @@ function ModalRemarcar({ isOpen, onClose, onSuccess, consulta }: ModalRemarcarPr
 
     try {
       const result = await calcularHorarios({
-        idMedico: medicoId,
-        idEspecialidade: especialidadeId,
+        idMedico: medicoSelecionado ? parseInt(medicoSelecionado) : 0,
+        idEspecialidade: especialidadeSelecionada ? parseInt(especialidadeSelecionada) : 0,
         data: dateString
       }).unwrap();
       

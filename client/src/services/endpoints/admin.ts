@@ -159,7 +159,7 @@ export const adminApi = api.injectEndpoints({
 
     getMedicoById: builder.query<Medico, number>({
       query: (id) => `admin/medicos/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Medico', id }],
+      providesTags: (_, __, id) => [{ type: 'Medico', id }],
     }),
 
     createMedico: builder.mutation<Medico, CreateMedicoRequest>({

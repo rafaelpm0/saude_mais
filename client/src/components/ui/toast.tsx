@@ -50,7 +50,7 @@ export const CustomToastContainer = () => (
     theme="light"
     pauseOnHover
     toastClassName="!bg-white !text-gray-900 !border !border-gray-300 !shadow-xl !font-medium"
-    bodyClassName="!text-gray-900 !font-medium"
+    className="!text-gray-900 !font-medium"
     progressClassName="!bg-blue-500"
   />
 );

@@ -47,10 +47,7 @@ export function DataTable<T>({
   const [currentPage, setCurrentPage] = useState(1)
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
 
-  const handleClearFilters = () => {
-    setFilterValues({})
-    setCurrentPage(1)
-  }
+
 
   const initialIndex = (currentPage - 1) * itemsPerPage
   const finalIndex = initialIndex + itemsPerPage
