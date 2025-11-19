@@ -4,13 +4,9 @@ import type { RootState } from '../app/store'
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({ 
-    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/',
+    baseUrl: 'http://localhost:5000/',
     prepareHeaders: (headers, { getState, endpoint }) => {
       headers.set('Content-Type', 'application/json');
-      
-      // Bypass do localtunnel - evita página de senha
-      headers.set('bypass-tunnel-reminder', 'true');
-      headers.set('User-Agent', 'SaudeMaisApp/1.0');
       
       // Não incluir token para rotas de autenticação (login e register)
       const authRoutes = ['login', 'register'];
