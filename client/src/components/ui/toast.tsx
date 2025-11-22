@@ -1,5 +1,5 @@
 // src/lib/toast.js
-import { toast, ToastContainer } from 'react-toastify';
+import { toast as toastify, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Estilos customizados para melhor legibilidade
@@ -61,9 +61,18 @@ const toastConfig = {
   bodyClassName: 'text-sm',
 };
 
-// Tipos de toast
-export const showSuccess = (message: string) => toast.success(message, toastConfig);
-export const showError = (message: string) => toast.error(message, toastConfig);
-export const showInfo = (message: string) => toast.info(message, toastConfig);
-export const showWarning = (message: string) => toast.warn(message, toastConfig);
-export const showToast = (message: string) => toast(message, toastConfig); // genérico
+// Export do toast
+export const toast = {
+  success: (message: string) => toastify.success(message, toastConfig),
+  error: (message: string) => toastify.error(message, toastConfig),
+  info: (message: string) => toastify.info(message, toastConfig),
+  warn: (message: string) => toastify.warn(message, toastConfig),
+  warning: (message: string) => toastify.warn(message, toastConfig),
+};
+
+// Tipos de toast (manter compatibilidade com código existente)
+export const showSuccess = (message: string) => toastify.success(message, toastConfig);
+export const showError = (message: string) => toastify.error(message, toastConfig);
+export const showInfo = (message: string) => toastify.info(message, toastConfig);
+export const showWarning = (message: string) => toastify.warn(message, toastConfig);
+export const showToast = (message: string) => toastify(message, toastConfig); // genérico

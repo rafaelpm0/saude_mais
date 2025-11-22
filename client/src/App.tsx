@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useEffect } from 'react'
 import Login from './pages/Login'
@@ -7,6 +7,8 @@ import Welcome from './pages/Welcome'
 import Agendamento from './pages/Agendamento'
 import AdminCadastros from './pages/AdminCadastros'
 import BloqueioUsuarios from './pages/BloqueioUsuarios'
+import MedicoAgenda from './pages/MedicoAgenda'
+import MedicoDisponibilidade from './pages/MedicoDisponibilidade'
 import Header from './components/header'
 import AuthInitializer from './components/AuthInitializer'
 import BreadCrumb from './components/ui/breadCrumb'
@@ -65,7 +67,9 @@ function App() {
         <Routes>
           <Route path="/" element={
             isAuthenticated ? (
-              user?.tipo === 3 ? <AdminCadastros /> : <Agendamento />
+              user?.tipo === 3 ? <AdminCadastros /> : 
+              user?.tipo === 2 ? <Navigate to="/medico/agenda" replace /> : 
+              <Agendamento />
             ) : <Welcome />
           } />
           <Route path="/agendamento" element={isAuthenticated ? <Agendamento /> : <Welcome />} />
@@ -74,6 +78,12 @@ function App() {
           } />
           <Route path="/bloqueio-usuarios" element={
             isAuthenticated && user?.tipo === 3 ? <BloqueioUsuarios /> : <Welcome />
+          } />
+          <Route path="/medico/agenda" element={
+            isAuthenticated && user?.tipo === 2 ? <MedicoAgenda /> : <Welcome />
+          } />
+          <Route path="/medico/disponibilidade" element={
+            isAuthenticated && user?.tipo === 2 ? <MedicoDisponibilidade /> : <Welcome />
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

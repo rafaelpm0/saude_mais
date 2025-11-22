@@ -135,5 +135,5 @@ export class ConvenioDto {
 export class UpdateStatusConsultaDto {
   @IsString()
   @IsNotEmpty()
-  status: 'A' | 'F' | 'C' | 'N';
+  status: 'A' | 'F' | 'C' | 'N' | 'R';
 }

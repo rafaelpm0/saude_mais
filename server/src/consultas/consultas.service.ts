@@ -724,7 +724,7 @@ export class ConsultasService {
   async processarConsultasVencidas(): Promise<void> {
     const agora = new Date();
     
-    // Buscar consultas com status 'A' que já passaram da data/hora
+    // Buscar consultas com status 'A' que já passaram da data/hora (excluindo bloqueios 'R')
     const consultasVencidas = await this.prisma.consulta.findMany({
       where: {
         status: 'A',
@@ -812,7 +812,7 @@ export class ConsultasService {
    */
   async atualizarStatusConsulta(
     consultaId: number, 
-    novoStatus: 'A' | 'F' | 'C' | 'N', 
+    novoStatus: 'A' | 'F' | 'C' | 'N' | 'R', 
     idUsuario: number,
     tipoUsuario: number
   ): Promise<ConsultaResponseDto> {

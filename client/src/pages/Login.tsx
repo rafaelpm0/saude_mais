@@ -41,7 +41,7 @@ function Login() {
       // Redirecionamento baseado no tipo de usuário
       const redirectPaths = {
         1: '/agendamento', // Paciente
-        2: '/agendamento', // Médico
+        2: '/medico/agenda', // Médico
         3: '/cadastros'    // Administrador
       };
 

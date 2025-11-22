@@ -95,7 +95,7 @@ model Agenda {
   idCliente  Int
   dtaInicial DateTime
   dtaFinal   DateTime
-  status     String  //  ‘A’ para ativo, ‘F’ para finalizado/atendido, ‘C’ cancelado, ‘N’ não comparecimento
+  status     String  //  'A' para ativo, 'F' para finalizado/atendido, 'C' cancelado, 'N' não comparecimento, 'R' para reserva/bloqueio
 
   medico  Usuario @relation("AgendaMedico", fields: [idMedico], references: [id])
   cliente Usuario @relation("AgendaCliente", fields: [idCliente], references: [id])
@@ -111,7 +111,7 @@ model Consulta {
   idAgenda   Int
   idConvenio Int
   observacao String?
-  status     String   //  ‘A’ para ativo, ‘F’ para finalizado/atendido, ‘C’ cancelado, ‘N’ não comparecimento
+  status     String   //  'A' para ativo, 'F' para finalizado/atendido, 'C' cancelado, 'N' não comparecimento, 'R' para reserva/bloqueio
 
   agenda    Agenda   @relation(fields: [idAgenda], references: [id])
   convenio  Convenio @relation(fields: [idConvenio], references: [id])
