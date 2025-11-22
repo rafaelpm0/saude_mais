@@ -39,6 +39,7 @@
     "clean": "rimraf dist",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepare:dev": "npx prisma generate && npx prisma migrate dev",
+    "seed": "npx ts-node prisma/seed.ts",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",

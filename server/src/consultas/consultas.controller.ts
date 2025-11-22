@@ -10,7 +10,8 @@ import {
   UseGuards, 
   Request,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConsultasService } from './consultas.service';
@@ -23,7 +24,8 @@ import {
   HorarioSlotDto,
   EspecialidadeDto,
   MedicoDto,
-  ConvenioDto
+  ConvenioDto,
+  UpdateStatusConsultaDto
 } from './dto/consultas.dto';
 
 @ApiTags('consultas')
@@ -99,7 +101,62 @@ export class ConsultasController {
   @ApiOperation({ summary: 'Buscar consultas do usuário logado' })
   @ApiResponse({ status: 200, description: 'Lista de consultas retornada com sucesso.' })
   async getMinhasConsultas(@Request() req: any): Promise<ConsultaResponseDto[]> {
-    return this.consultasService.getConsultasPaciente(req.user.userId);
+    return this.consultasService.getConsultasPacienteComProcessamento(req.user.userId);
+  }
+
+  @Post('processar-vencidas')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Processar consultas vencidas e marcar como falta' })
+  @ApiResponse({ status: 200, description: 'Consultas vencidas processadas com sucesso.' })
+  async processarConsultasVencidas(): Promise<{ message: string }> {
+    await this.consultasService.processarConsultasVencidas();
+    return { message: 'Consultas vencidas processadas com sucesso' };
+  }
+
+  @Put(':id/status')
+  @ApiOperation({ summary: 'Atualizar status da consulta (médicos e administradores)' })
+  @ApiResponse({ status: 200, description: 'Status da consulta atualizado com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos ou sem permissão.' })
+  @ApiResponse({ status: 404, description: 'Consulta não encontrada.' })
+  async atualizarStatusConsulta(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateStatusConsultaDto,
+    @Request() req: any
+  ): Promise<ConsultaResponseDto> {
+    return this.consultasService.atualizarStatusConsulta(
+      parseInt(id),
+      updateStatusDto.status,
+      req.user.userId,
+      req.user.tipo
+    );
+  }
+
+  @Get('medico/minhas')
+  @ApiOperation({ summary: 'Buscar consultas do médico logado' })
+  @ApiResponse({ status: 200, description: 'Lista de consultas do médico retornada com sucesso.' })
+  async getConsultasMedico(@Request() req: any): Promise<ConsultaResponseDto[]> {
+    // Verificar se o usuário é médico
+    if (req.user.tipo !== 2) {
+      throw new BadRequestException('Endpoint disponível apenas para médicos');
+    }
+    return this.consultasService.getConsultasMedico(req.user.userId);
+  }
+
+  @Get('debug/dados')
+  @ApiOperation({ summary: 'Debug - verificar dados do banco' })
+  async debugDados(): Promise<any> {
+    const especialidades = await this.consultasService.getEspecialidades();
+    const medicos = await this.consultasService.getMedicosByEspecialidade(1);
+    const convenios = await this.consultasService.getConveniosByMedicoEspecialidade(1, 1);
+    
+    return {
+      especialidades: especialidades.length,
+      medicos: medicos.length,
+      convenios: convenios.length,
+      especialidadesData: especialidades,
+      medicosData: medicos,
+      conveniosData: convenios
+    };
   }
 
   @Get(':id')

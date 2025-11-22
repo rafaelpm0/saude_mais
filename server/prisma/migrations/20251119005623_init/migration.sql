@@ -1,26 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Client` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Service` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `TypeService` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "Client";
-PRAGMA foreign_keys=on;
-
--- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "Service";
-PRAGMA foreign_keys=on;
-
--- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "TypeService";
-PRAGMA foreign_keys=on;
-
 -- CreateTable
 CREATE TABLE "Especialidade" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

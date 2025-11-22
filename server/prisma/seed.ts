@@ -279,14 +279,12 @@ async function seed() {
       })
     ]);
 
-    // 6. Criar algumas Agendas e Consultas de exemplo
+    // 6. Criar Agendas e Consultas de exemplo com diferentes status e datas
+    
+    // Consulta futura (amanhã) - Ativa
     const dataAmanha = new Date();
     dataAmanha.setDate(dataAmanha.getDate() + 1);
     dataAmanha.setHours(9, 0, 0, 0);
-
-    const dataProximaSemana = new Date();
-    dataProximaSemana.setDate(dataProximaSemana.getDate() + 7);
-    dataProximaSemana.setHours(14, 0, 0, 0);
 
     const agenda1 = await prisma.agenda.create({
       data: {
@@ -298,6 +296,11 @@ async function seed() {
       }
     });
 
+    // Consulta futura (próxima semana) - Ativa
+    const dataProximaSemana = new Date();
+    dataProximaSemana.setDate(dataProximaSemana.getDate() + 7);
+    dataProximaSemana.setHours(14, 0, 0, 0);
+
     const agenda2 = await prisma.agenda.create({
       data: {
         idMedico: medico2.id,
@@ -308,7 +311,54 @@ async function seed() {
       }
     });
 
+    // Consulta no passado - Deve ser marcada como falta (N) pelo processamento automático
+    const dataPassada = new Date();
+    dataPassada.setDate(dataPassada.getDate() - 2); // 2 dias atrás
+    dataPassada.setHours(10, 0, 0, 0);
+
+    const agenda3 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente1.id,
+        dtaInicial: dataPassada,
+        dtaFinal: new Date(dataPassada.getTime() + 30 * 60000),
+        status: 'A' // Será alterado para 'N' pelo processamento
+      }
+    });
+
+    // Consulta finalizada (ontem)
+    const dataOntem = new Date();
+    dataOntem.setDate(dataOntem.getDate() - 1);
+    dataOntem.setHours(15, 0, 0, 0);
+
+    const agenda4 = await prisma.agenda.create({
+      data: {
+        idMedico: medico2.id,
+        idCliente: paciente2.id,
+        dtaInicial: dataOntem,
+        dtaFinal: new Date(dataOntem.getTime() + 45 * 60000),
+        status: 'F' // Finalizada
+      }
+    });
+
+    // Consulta cancelada
+    const dataCancelada = new Date();
+    dataCancelada.setDate(dataCancelada.getDate() + 3);
+    dataCancelada.setHours(11, 0, 0, 0);
+
+    const agenda5 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente1.id,
+        dtaInicial: dataCancelada,
+        dtaFinal: new Date(dataCancelada.getTime() + 60 * 60000), // Cardiologia = 60min
+        status: 'C' // Cancelada
+      }
+    });
+
+    // Criar consultas correspondentes
     await Promise.all([
+      // Consulta ativa futura
       prisma.consulta.create({
         data: {
           idAgenda: agenda1.id,
@@ -317,12 +367,40 @@ async function seed() {
           status: 'A'
         }
       }),
+      // Consulta ativa futura
       prisma.consulta.create({
         data: {
           idAgenda: agenda2.id,
           idConvenio: 1, // SUS
           observacao: 'Consulta pediátrica - acompanhamento do crescimento',
           status: 'A'
+        }
+      }),
+      // Consulta que será marcada como falta
+      prisma.consulta.create({
+        data: {
+          idAgenda: agenda3.id,
+          idConvenio: 2, // Unimed
+          observacao: 'Consulta de clínica geral - não compareceu',
+          status: 'A' // Será alterado para 'N'
+        }
+      }),
+      // Consulta finalizada
+      prisma.consulta.create({
+        data: {
+          idAgenda: agenda4.id,
+          idConvenio: 3, // Bradesco
+          observacao: 'Consulta pediátrica realizada com sucesso',
+          status: 'F'
+        }
+      }),
+      // Consulta cancelada
+      prisma.consulta.create({
+        data: {
+          idAgenda: agenda5.id,
+          idConvenio: 2, // Unimed
+          observacao: 'Consulta de cardiologia - cancelada pelo paciente',
+          status: 'C'
         }
       })
     ]);
@@ -331,10 +409,10 @@ async function seed() {
     console.log('\n📊 Dados criados:');
     console.log(`📋 ${especialidades.length} Especialidades`);
     console.log(`🏥 ${convenios.length} Convênios`);
-    console.log(`👤 3 Pacientes, 2 Médicos, 1 Admin`);
+    console.log(`👤 2 Pacientes, 2 Médicos, 1 Admin`);
     console.log(`👨‍⚕️ 9 Combinações Médico+Especialidade+Convênio`);
     console.log(`📅 8 Disponibilidades configuradas`);
-    console.log(`📝 2 Consultas agendadas`);
+    console.log(`📝 5 Consultas com diferentes status criadas`);
     
     console.log('\n👨‍⚕️ Médicos e suas especialidades:');
     console.log('• Dra. Ana Santos (CRM12345):');
@@ -346,6 +424,12 @@ async function seed() {
     console.log('  - Ortopedia: Bradesco (60min), Amil (60min)');
     console.log('  - Disponível: Ter-Qui 14h-18h, Sáb 8h-12h');
 
+    console.log('\n📝 Consultas criadas para teste:');
+    console.log('• 2 Consultas futuras ativas (amanhã e próxima semana)');
+    console.log('• 1 Consulta no passado (será marcada como falta automaticamente)');
+    console.log('• 1 Consulta finalizada (ontem)');
+    console.log('• 1 Consulta cancelada');
+
     console.log('\n📋 Credenciais para teste:');
     console.log('Pacientes:');
     console.log('• paciente@teste.com ou CPF: 11111111111 (João Silva)');
@@ -356,6 +440,9 @@ async function seed() {
     console.log('Admin:');
     console.log('• admin@teste.com ou CPF: 33333333333 (Carlos Oliveira)');
     console.log('Senha: 12345678 (para todos os usuários)');
+    
+    console.log('\n⚠️  Nota: A consulta no passado será automaticamente marcada como falta (N)');
+    console.log('quando o sistema processar consultas vencidas na próxima inicialização.');
 
   } catch (error) {
     console.error('❌ Erro ao executar seed:', error);
