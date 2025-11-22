@@ -196,13 +196,13 @@ function ModalRemarcar({ isOpen, onClose, onSuccess, consulta }: ModalRemarcarPr
                     <div>
                       <span className="text-sm text-gray-600">Data:</span>
                       <p className="font-medium">
-                        {new Date(consulta.agenda.dtaInicial).toLocaleDateString('pt-BR')}
+                        {new Date(consulta.agenda.dtaInicial.replace('Z', '')).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     <div>
                       <span className="text-sm text-gray-600">Horário:</span>
                       <p className="font-medium">
-                        {new Date(consulta.agenda.dtaInicial).toLocaleTimeString('pt-BR', { 
+                        {new Date(consulta.agenda.dtaInicial.replace('Z', '')).toLocaleTimeString('pt-BR', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}

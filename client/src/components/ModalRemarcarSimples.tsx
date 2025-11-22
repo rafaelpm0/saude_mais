@@ -193,7 +193,7 @@ function ModalRemarcarSimples({ isOpen, onClose, onSuccess, consulta }: ModalRem
           <h3 className="font-semibold mb-2">Consulta Atual:</h3>
           <p><strong>Médico:</strong> {consulta.agenda.medico.nome}</p>
           <p><strong>Convênio:</strong> {consulta.convenio.nome}</p>
-          <p><strong>Data/Hora Atual:</strong> {new Date(consulta.agenda.dtaInicial).toLocaleString('pt-BR')}</p>
+          <p><strong>Data/Hora Atual:</strong> {new Date(consulta.agenda.dtaInicial.replace('Z', '')).toLocaleString('pt-BR')}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-6">

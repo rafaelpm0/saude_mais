@@ -24,14 +24,14 @@ function Agendamento() {
 
   // Filtrar consultas ativas (futuras) - CORRIGIDO
   const consultasFuturas = minhasConsultas.filter(consulta => {
-    const dataConsulta = new Date(consulta.agenda.dtaInicial);
+    const dataConsulta = new Date(consulta.agenda.dtaInicial.replace('Z', ''));
     const agora = new Date();
     return dataConsulta > agora && consulta.status === 'A';
   });
 
   // Filtrar histórico (passadas, canceladas, finalizadas ou não compareceu) - CORRIGIDO
   const historicoConsultas = minhasConsultas.filter(consulta => {
-    const dataConsulta = new Date(consulta.agenda.dtaInicial);
+    const dataConsulta = new Date(consulta.agenda.dtaInicial.replace('Z', ''));
     const agora = new Date();
     return dataConsulta <= agora || ['C', 'F', 'N'].includes(consulta.status);
   });
@@ -60,7 +60,8 @@ function Agendamento() {
   };
 
   const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
+    // Remove o 'Z' para tratar como horário local, não UTC
+    const date = new Date(dateString.replace('Z', ''));
     return {
       date: date.toLocaleDateString('pt-BR'),
       time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -68,7 +69,7 @@ function Agendamento() {
   };
 
   const canEditOrCancel = (dataConsulta: string) => {
-    const consulta = new Date(dataConsulta);
+    const consulta = new Date(dataConsulta.replace('Z', ''));
     const agora = new Date();
     const horasAntecedencia = (consulta.getTime() - agora.getTime()) / (1000 * 60 * 60);
     return horasAntecedencia >= 24;
