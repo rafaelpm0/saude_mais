@@ -322,7 +322,7 @@ export class ConsultasService {
       throw new BadRequestException('Médico não encontrado ou inativo');
     }
 
-    // Verificar se o cliente/paciente existe
+    // Verificar se o cliente/paciente existe e não está bloqueado
     const cliente = await this.prisma.usuario.findFirst({
       where: {
         id: idCliente,
@@ -332,6 +332,11 @@ export class ConsultasService {
 
     if (!cliente) {
       throw new BadRequestException('Paciente não encontrado');
+    }
+
+    // Verificação adicional de bloqueio (dupla validação por segurança)
+    if (cliente.faltasConsecutivas >= 3) {
+      throw new BadRequestException(`Paciente está bloqueado por ${cliente.faltasConsecutivas} faltas consecutivas. Entre em contato com a administração.`);
     }
 
     // Verificar se o médico atende esta especialidade/convênio
@@ -349,22 +354,27 @@ export class ConsultasService {
 
     const dataFinal = new Date(dataConsulta.getTime() + usuarioMedico.tempoConsulta * 60000);
 
-    // Verificar conflitos de horário (apenas com agendas ativas e futuras)
+    // Verificar conflitos de horário - checar se há sobreposição de horários
     const conflito = await this.prisma.agenda.findFirst({
       where: {
         idMedico: idMedico,
-        status: 'A',
-        dtaInicial: {
-          gte: hoje // Apenas agendas futuras
-        },
+        status: 'A', // Apenas agendas ativas
         OR: [
           {
-            dtaInicial: {
-              lt: dataFinal
-            },
-            dtaFinal: {
-              gt: dataConsulta
-            }
+            // Novo agendamento começa antes do existente terminar
+            // E novo agendamento termina depois do existente começar
+            AND: [
+              {
+                dtaInicial: {
+                  lt: dataFinal
+                }
+              },
+              {
+                dtaFinal: {
+                  gt: dataConsulta
+                }
+              }
+            ]
           }
         ]
       }
@@ -398,12 +408,12 @@ export class ConsultasService {
       return { agenda, consulta };
     });
 
-    // Buscar consulta completa para retorno
-    return await this.getConsultaById(resultado.consulta.id);
+    // Retornar consulta criada (buscar consulta completa)
+    return await this.getConsultaById(resultado.consulta.id, idCliente, 1); // Passar dados do paciente
   }
 
   // Buscar consulta por ID
-  async getConsultaById(id: number): Promise<ConsultaResponseDto> {
+  async getConsultaById(id: number, idUsuario?: number, tipoUsuario?: number): Promise<ConsultaResponseDto> {
     const consulta = await this.prisma.consulta.findUnique({
       where: { id },
       include: {
@@ -419,6 +429,20 @@ export class ConsultasService {
 
     if (!consulta) {
       throw new NotFoundException('Consulta não encontrada');
+    }
+
+    // Validar acesso baseado no tipo de usuário
+    if (idUsuario && tipoUsuario) {
+      if (tipoUsuario === 1) { // Paciente
+        if (consulta.agenda.idCliente !== idUsuario) {
+          throw new BadRequestException('Você só pode visualizar suas próprias consultas');
+        }
+      } else if (tipoUsuario === 2) { // Médico
+        if (consulta.agenda.idMedico !== idUsuario) {
+          throw new BadRequestException('Você só pode visualizar consultas onde é o médico responsável');
+        }
+      }
+      // Administradores (tipo 3) podem ver qualquer consulta
     }
 
     // Buscar a especialidade da consulta através do UsuarioMedico
@@ -462,6 +486,79 @@ export class ConsultasService {
     };
   }
 
+  // Método auxiliar para buscar consultas com especialidades de forma otimizada
+  private async buscarConsultasComEspecialidades(
+    consultas: any[]
+  ): Promise<ConsultaResponseDto[]> {
+    // Criar mapa de especialidades por médico e convênio para evitar consultas duplicadas
+    const especialidadesMap = new Map<string, any>();
+    
+    // Buscar todas as especialidades de uma só vez
+    const combinacoesMedicoConvenio = consultas.map(c => ({
+      medico: c.agenda.idMedico,
+      convenio: c.idConvenio
+    }));
+    
+    // Remover duplicatas
+    const combinacoesUnicas = combinacoesMedicoConvenio.filter((combo, index, arr) => 
+      arr.findIndex(c => c.medico === combo.medico && c.convenio === combo.convenio) === index
+    );
+    
+    // Buscar especialidades para todas as combinações únicas
+    const usuariosMedicos = await this.prisma.usuarioMedico.findMany({
+      where: {
+        OR: combinacoesUnicas.map(combo => ({
+          idUsuario: combo.medico,
+          idConvenio: combo.convenio
+        }))
+      },
+      include: {
+        especialidade: true
+      }
+    });
+    
+    // Criar mapa para acesso rápido
+    usuariosMedicos.forEach(um => {
+      const chave = `${um.idUsuario}-${um.idConvenio}`;
+      especialidadesMap.set(chave, um.especialidade);
+    });
+    
+    // Mapear consultas com especialidades
+    return consultas.map(consulta => {
+      const chaveEspecialidade = `${consulta.agenda.idMedico}-${consulta.idConvenio}`;
+      const especialidade = especialidadesMap.get(chaveEspecialidade);
+      
+      return {
+        id: consulta.id,
+        agenda: {
+          id: consulta.agenda.id,
+          dtaInicial: consulta.agenda.dtaInicial,
+          dtaFinal: consulta.agenda.dtaFinal,
+          status: consulta.agenda.status,
+          medico: {
+            id: consulta.agenda.medico.id,
+            nome: consulta.agenda.medico.nome,
+            crm: consulta.agenda.medico.crm
+          },
+          cliente: {
+            id: consulta.agenda.cliente.id,
+            nome: consulta.agenda.cliente.nome
+          }
+        },
+        convenio: {
+          id: consulta.convenio.id,
+          nome: consulta.convenio.nome
+        },
+        especialidade: especialidade ? {
+          id: especialidade.id,
+          descricao: especialidade.descricao
+        } : undefined,
+        observacao: consulta.observacao,
+        status: consulta.status
+      };
+    });
+  }
+
   // Buscar consultas do paciente
   async getConsultasPaciente(idPaciente: number): Promise<ConsultaResponseDto[]> {
     const consultas = await this.prisma.consulta.findMany({
@@ -486,55 +583,11 @@ export class ConsultasService {
       }
     });
 
-    // Buscar especialidades para cada consulta
-    const consultasComEspecialidades = await Promise.all(
-      consultas.map(async (consulta) => {
-        const usuarioMedico = await this.prisma.usuarioMedico.findFirst({
-          where: {
-            idUsuario: consulta.agenda.idMedico,
-            idConvenio: consulta.idConvenio
-          },
-          include: {
-            especialidade: true
-          }
-        });
-
-        return {
-          id: consulta.id,
-          agenda: {
-            id: consulta.agenda.id,
-            dtaInicial: consulta.agenda.dtaInicial,
-            dtaFinal: consulta.agenda.dtaFinal,
-            status: consulta.agenda.status,
-            medico: {
-              id: consulta.agenda.medico.id,
-              nome: consulta.agenda.medico.nome,
-              crm: consulta.agenda.medico.crm
-            },
-            cliente: {
-              id: consulta.agenda.cliente.id,
-              nome: consulta.agenda.cliente.nome
-            }
-          },
-          convenio: {
-            id: consulta.convenio.id,
-            nome: consulta.convenio.nome
-          },
-          especialidade: usuarioMedico ? {
-            id: usuarioMedico.especialidade.id,
-            descricao: usuarioMedico.especialidade.descricao
-          } : undefined,
-          observacao: consulta.observacao,
-          status: consulta.status
-        };
-      })
-    );
-
-    return consultasComEspecialidades;
+    return this.buscarConsultasComEspecialidades(consultas);
   }
 
   // Cancelar consulta
-  async cancelarConsulta(id: number, idUsuario: number): Promise<void> {
+  async cancelarConsulta(id: number, idUsuario: number, tipoUsuario?: number): Promise<void> {
     const consulta = await this.prisma.consulta.findUnique({
       where: { id },
       include: { agenda: true }
@@ -544,9 +597,17 @@ export class ConsultasService {
       throw new NotFoundException('Consulta não encontrada');
     }
 
-    // Verificar se o usuário pode cancelar (é o paciente da consulta)
-    if (consulta.agenda.idCliente !== idUsuario) {
-      throw new BadRequestException('Você não pode cancelar esta consulta');
+    // Verificar se o usuário pode cancelar
+    // Pacientes só podem cancelar suas próprias consultas
+    // Administradores podem cancelar qualquer consulta
+    if (tipoUsuario === 1 || !tipoUsuario) { // Paciente ou não especificado (padrão paciente)
+      if (consulta.agenda.idCliente !== idUsuario) {
+        throw new BadRequestException('Você só pode cancelar suas próprias consultas');
+      }
+    } else if (tipoUsuario === 3) {
+      // Administrador pode cancelar qualquer consulta (sem restrição adicional)
+    } else {
+      throw new BadRequestException('Você não tem permissão para cancelar consultas');
     }
 
     // Verificar antecedência mínima de 24 horas
@@ -572,7 +633,7 @@ export class ConsultasService {
   }
 
   // Atualizar consulta
-  async atualizarConsulta(id: number, dto: UpdateConsultaDto, idUsuario: number): Promise<ConsultaResponseDto> {
+  async atualizarConsulta(id: number, dto: UpdateConsultaDto, idUsuario: number, tipoUsuario?: number): Promise<ConsultaResponseDto> {
     const consulta = await this.prisma.consulta.findUnique({
       where: { id },
       include: { agenda: true }
@@ -583,8 +644,16 @@ export class ConsultasService {
     }
 
     // Verificar se o usuário pode editar
-    if (consulta.agenda.idCliente !== idUsuario) {
-      throw new BadRequestException('Você não pode editar esta consulta');
+    // Pacientes só podem editar suas próprias consultas
+    // Administradores podem editar qualquer consulta
+    if (tipoUsuario === 1 || !tipoUsuario) { // Paciente ou não especificado (padrão paciente)
+      if (consulta.agenda.idCliente !== idUsuario) {
+        throw new BadRequestException('Você só pode editar suas próprias consultas');
+      }
+    } else if (tipoUsuario === 3) {
+      // Administrador pode editar qualquer consulta (sem restrição adicional)
+    } else {
+      throw new BadRequestException('Você não tem permissão para editar consultas');
     }
 
     // Se está alterando data/hora, verificar antecedência
@@ -732,12 +801,11 @@ export class ConsultasService {
    * Buscar consultas do paciente com processamento de consultas vencidas
    */
   async getConsultasPacienteComProcessamento(idPaciente: number): Promise<ConsultaResponseDto[]> {
-    // Processar consultas vencidas primeiro
-    await this.processarConsultasVencidas();
-    
-    // Retornar consultas atualizadas
+    // Retornar consultas (processamento automático já acontece via task service)
     return this.getConsultasPaciente(idPaciente);
   }
+
+
 
   /**
    * Atualizar status da consulta (usado por médicos e administradores)
@@ -816,9 +884,6 @@ export class ConsultasService {
    * Buscar consultas de um médico específico
    */
   async getConsultasMedico(idMedico: number): Promise<ConsultaResponseDto[]> {
-    // Processar consultas vencidas primeiro
-    await this.processarConsultasVencidas();
-
     const consultas = await this.prisma.consulta.findMany({
       where: {
         agenda: {
@@ -841,50 +906,6 @@ export class ConsultasService {
       }
     });
 
-    // Buscar especialidades para cada consulta
-    const consultasComEspecialidades = await Promise.all(
-      consultas.map(async (consulta) => {
-        const usuarioMedico = await this.prisma.usuarioMedico.findFirst({
-          where: {
-            idUsuario: consulta.agenda.idMedico,
-            idConvenio: consulta.idConvenio
-          },
-          include: {
-            especialidade: true
-          }
-        });
-
-        return {
-          id: consulta.id,
-          agenda: {
-            id: consulta.agenda.id,
-            dtaInicial: consulta.agenda.dtaInicial,
-            dtaFinal: consulta.agenda.dtaFinal,
-            status: consulta.agenda.status,
-            medico: {
-              id: consulta.agenda.medico.id,
-              nome: consulta.agenda.medico.nome,
-              crm: consulta.agenda.medico.crm
-            },
-            cliente: {
-              id: consulta.agenda.cliente.id,
-              nome: consulta.agenda.cliente.nome
-            }
-          },
-          convenio: {
-            id: consulta.convenio.id,
-            nome: consulta.convenio.nome
-          },
-          especialidade: usuarioMedico ? {
-            id: usuarioMedico.especialidade.id,
-            descricao: usuarioMedico.especialidade.descricao
-          } : undefined,
-          observacao: consulta.observacao,
-          status: consulta.status
-        };
-      })
-    );
-
-    return consultasComEspecialidades;
+    return this.buscarConsultasComEspecialidades(consultas);
   }
 }

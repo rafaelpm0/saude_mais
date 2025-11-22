@@ -22,18 +22,18 @@ function Agendamento() {
   const { data: minhasConsultas = [], refetch } = useGetMinhasConsultasQuery();
   const [cancelarConsulta] = useCancelarConsultaMutation();
 
-  // Filtrar consultas ativas (futuras)
+  // Filtrar consultas ativas (futuras) - CORRIGIDO
   const consultasFuturas = minhasConsultas.filter(consulta => {
     const dataConsulta = new Date(consulta.agenda.dtaInicial);
     const agora = new Date();
     return dataConsulta > agora && consulta.status === 'A';
   });
 
-  // Filtrar histórico (passadas ou canceladas)
+  // Filtrar histórico (passadas, canceladas, finalizadas ou não compareceu) - CORRIGIDO
   const historicoConsultas = minhasConsultas.filter(consulta => {
     const dataConsulta = new Date(consulta.agenda.dtaInicial);
     const agora = new Date();
-    return dataConsulta <= agora || consulta.status !== 'A';
+    return dataConsulta <= agora || ['C', 'F', 'N'].includes(consulta.status);
   });
 
   const handleConsultaClick = (consulta: ConsultaResponse) => {

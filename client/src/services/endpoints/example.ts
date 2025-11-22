@@ -6,7 +6,7 @@ export const exampleApi = api.injectEndpoints({
     // Exemplo de query
     getItems: builder.query<any[], void>({
       query: () => 'items',
-      providesTags: ['Item'],
+      // Sem cache para aplicação de aula
     }),
     
     // Exemplo de mutation  
@@ -16,7 +16,7 @@ export const exampleApi = api.injectEndpoints({
         method: 'POST',
         body: newItem,
       }),
-      invalidatesTags: ['Item'],
+      // Sem cache para aplicação de aula
     }),
   }),
   overrideExisting: false,

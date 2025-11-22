@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConsultasService } from './consultas.service';
+import { ConsultasTaskService } from './task.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { 
   CreateConsultaDto, 
@@ -33,7 +34,10 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ConsultasController {
-  constructor(private consultasService: ConsultasService) {}
+  constructor(
+    private consultasService: ConsultasService,
+    private consultasTaskService: ConsultasTaskService
+  ) {}
 
   @Get('especialidades')
   @ApiOperation({ summary: 'Buscar todas as especialidades disponíveis' })
@@ -94,6 +98,10 @@ export class ConsultasController {
     @Body() createConsultaDto: CreateConsultaDto,
     @Request() req: any
   ): Promise<ConsultaResponseDto> {
+    // Verificar se o usuário é um paciente
+    if (req.user.tipo !== 1) {
+      throw new BadRequestException('Apenas pacientes podem agendar consultas');
+    }
     return this.consultasService.criarConsulta(createConsultaDto, req.user.userId);
   }
 
@@ -104,6 +112,8 @@ export class ConsultasController {
     return this.consultasService.getConsultasPacienteComProcessamento(req.user.userId);
   }
 
+
+
   @Post('processar-vencidas')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Processar consultas vencidas e marcar como falta' })
@@ -112,6 +122,8 @@ export class ConsultasController {
     await this.consultasService.processarConsultasVencidas();
     return { message: 'Consultas vencidas processadas com sucesso' };
   }
+
+
 
   @Put(':id/status')
   @ApiOperation({ summary: 'Atualizar status da consulta (médicos e administradores)' })
@@ -163,8 +175,8 @@ export class ConsultasController {
   @ApiOperation({ summary: 'Buscar consulta por ID' })
   @ApiResponse({ status: 200, description: 'Consulta encontrada com sucesso.' })
   @ApiResponse({ status: 404, description: 'Consulta não encontrada.' })
-  async getConsultaById(@Param('id') id: string): Promise<ConsultaResponseDto> {
-    return this.consultasService.getConsultaById(parseInt(id));
+  async getConsultaById(@Param('id') id: string, @Request() req: any): Promise<ConsultaResponseDto> {
+    return this.consultasService.getConsultaById(parseInt(id), req.user.userId, req.user.tipo);
   }
 
   @Put(':id')
@@ -180,7 +192,8 @@ export class ConsultasController {
     return this.consultasService.atualizarConsulta(
       parseInt(id), 
       updateConsultaDto, 
-      req.user.userId
+      req.user.userId,
+      req.user.tipo
     );
   }
 
@@ -194,6 +207,6 @@ export class ConsultasController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<void> {
-    return this.consultasService.cancelarConsulta(parseInt(id), req.user.userId);
+    return this.consultasService.cancelarConsulta(parseInt(id), req.user.userId, req.user.tipo);
   }
 }

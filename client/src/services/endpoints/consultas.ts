@@ -87,33 +87,27 @@ export const consultasApi = api.injectEndpoints({
     // Buscar especialidades
     getEspecialidades: builder.query<Especialidade[], void>({
       query: () => 'consultas/especialidades',
-      providesTags: ['Especialidade'],
+      // Sem cache para aplicação de aula
     }),
 
     // Buscar médicos por especialidade
     getMedicosByEspecialidade: builder.query<Medico[], number>({
       query: (especialidadeId) => `consultas/especialidades/${especialidadeId}/medicos`,
-      providesTags: (_, __, especialidadeId) => [
-        { type: 'Medico', id: especialidadeId }
-      ],
+      // Sem cache para aplicação de aula
     }),
 
     // Buscar convênios por médico e especialidade
     getConveniosByMedicoEspecialidade: builder.query<Convenio[], { medicoId: number; especialidadeId: number }>({
       query: ({ medicoId, especialidadeId }) => 
         `consultas/medicos/${medicoId}/especialidades/${especialidadeId}/convenios`,
-      providesTags: (_, __, { medicoId, especialidadeId }) => [
-        { type: 'Convenio', id: `${medicoId}-${especialidadeId}` }
-      ],
+      // Sem cache para aplicação de aula
     }),
 
     // Buscar dias habilitados no calendário
     getDiasHabilitados: builder.query<DiasHabilitados, { medicoId: number; ano: number; mes: number }>({
       query: ({ medicoId, ano, mes }) => 
         `consultas/medicos/${medicoId}/calendario?ano=${ano}&mes=${mes}`,
-      providesTags: (_, __, { medicoId, ano, mes }) => [
-        { type: 'Calendario', id: `${medicoId}-${ano}-${mes}` }
-      ],
+      // Sem cache para aplicação de aula
     }),
 
     // Calcular horários disponíveis (mutation porque é um POST)
@@ -123,6 +117,7 @@ export const consultasApi = api.injectEndpoints({
         method: 'POST',
         body,
       }),
+      // Sem cache para aplicação de aula
     }),
 
     // Criar nova consulta
@@ -132,19 +127,19 @@ export const consultasApi = api.injectEndpoints({
         method: 'POST',
         body: newConsulta,
       }),
-      invalidatesTags: ['Consulta', 'Calendario'],
+      // Sem cache para aplicação de aula
     }),
 
     // Buscar minhas consultas
     getMinhasConsultas: builder.query<ConsultaResponse[], void>({
       query: () => 'consultas/minhas',
-      providesTags: ['Consulta'],
+      // Sem cache para aplicação de aula
     }),
 
     // Buscar consulta por ID
     getConsultaById: builder.query<ConsultaResponse, number>({
       query: (id) => `consultas/${id}`,
-      providesTags: (_, __, id) => [{ type: 'Consulta', id }],
+      // Sem cache para aplicação de aula
     }),
 
     // Atualizar consulta
@@ -154,11 +149,7 @@ export const consultasApi = api.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_, __, { id }) => [
-        { type: 'Consulta', id },
-        'Consulta',
-        'Calendario'
-      ],
+      // Sem cache para aplicação de aula
     }),
 
     // Cancelar consulta
@@ -167,11 +158,7 @@ export const consultasApi = api.injectEndpoints({
         url: `consultas/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_, __, id) => [
-        { type: 'Consulta', id },
-        'Consulta',
-        'Calendario'
-      ],
+      // Sem cache para aplicação de aula
     }),
   }),
   overrideExisting: false,

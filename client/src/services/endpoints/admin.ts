@@ -90,7 +90,7 @@ export const adminApi = api.injectEndpoints({
     // ========== ESPECIALIDADES ==========
     getEspecialidades: builder.query<Especialidade[], void>({
       query: () => 'admin/especialidades',
-      providesTags: ['Especialidade'],
+      // Sem cache para aplicação de aula
     }),
 
     createEspecialidade: builder.mutation<Especialidade, CreateEspecialidadeRequest>({
@@ -99,7 +99,7 @@ export const adminApi = api.injectEndpoints({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Especialidade'],
+      // Sem cache para aplicação de aula
     }),
 
     updateEspecialidade: builder.mutation<Especialidade, { id: number; data: UpdateEspecialidadeRequest }>({
@@ -108,7 +108,7 @@ export const adminApi = api.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ['Especialidade'],
+      // Sem cache para aplicação de aula
     }),
 
     deleteEspecialidade: builder.mutation<void, number>({
@@ -116,13 +116,13 @@ export const adminApi = api.injectEndpoints({
         url: `admin/especialidades/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Especialidade'],
+      // Sem cache para aplicação de aula
     }),
 
     // ========== CONVÊNIOS ==========
     getConvenios: builder.query<Convenio[], void>({
       query: () => 'admin/convenios',
-      providesTags: ['Convenio'],
+      // Sem cache para aplicação de aula
     }),
 
     createConvenio: builder.mutation<Convenio, CreateConvenioRequest>({
@@ -131,7 +131,7 @@ export const adminApi = api.injectEndpoints({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Convenio'],
+      // Sem cache para aplicação de aula
     }),
 
     updateConvenio: builder.mutation<Convenio, { id: number; data: UpdateConvenioRequest }>({
@@ -140,7 +140,7 @@ export const adminApi = api.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ['Convenio'],
+      // Sem cache para aplicação de aula
     }),
 
     deleteConvenio: builder.mutation<void, number>({
@@ -148,18 +148,18 @@ export const adminApi = api.injectEndpoints({
         url: `admin/convenios/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Convenio'],
+      // Sem cache para aplicação de aula
     }),
 
     // ========== MÉDICOS ==========
     getMedicos: builder.query<Medico[], void>({
       query: () => 'admin/medicos',
-      providesTags: ['Medico'],
+      // Sem cache para aplicação de aula
     }),
 
     getMedicoById: builder.query<Medico, number>({
       query: (id) => `admin/medicos/${id}`,
-      providesTags: (_, __, id) => [{ type: 'Medico', id }],
+      // Sem cache para aplicação de aula
     }),
 
     createMedico: builder.mutation<Medico, CreateMedicoRequest>({
@@ -168,7 +168,7 @@ export const adminApi = api.injectEndpoints({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Medico'],
+      // Sem cache para aplicação de aula
     }),
 
     updateMedico: builder.mutation<Medico, { id: number; data: UpdateMedicoRequest }>({
@@ -177,7 +177,7 @@ export const adminApi = api.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ['Medico'],
+      // Sem cache para aplicação de aula
     }),
 
     deleteMedico: builder.mutation<void, number>({
@@ -185,13 +185,13 @@ export const adminApi = api.injectEndpoints({
         url: `admin/medicos/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Medico'],
+      // Sem cache para aplicação de aula
     }),
 
     // ========== USUÁRIOS ==========
     getUsuarios: builder.query<Usuario[], void>({
       query: () => 'admin/usuarios',
-      providesTags: ['Usuario'],
+      // Sem cache para aplicação de aula
     }),
 
     resetarFaltasUsuario: builder.mutation<Usuario, number>({
@@ -199,7 +199,7 @@ export const adminApi = api.injectEndpoints({
         url: `admin/usuarios/${id}/resetar-faltas`,
         method: 'PUT',
       }),
-      invalidatesTags: ['Usuario'],
+      // Sem cache para aplicação de aula
     }),
   }),
   overrideExisting: false,

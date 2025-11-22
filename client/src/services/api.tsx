@@ -8,6 +8,11 @@ export const api = createApi({
     prepareHeaders: (headers, { getState, endpoint }) => {
       headers.set('Content-Type', 'application/json');
       
+      // Desabilitar cache completamente para aplicação de aula
+      headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      headers.set('Pragma', 'no-cache');
+      headers.set('Expires', '0');
+      
       // Não incluir token para rotas de autenticação (login e register)
       const authRoutes = ['login', 'register'];
       const isAuthRoute = authRoutes.some(route => endpoint?.includes(route));
@@ -23,6 +28,11 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['User', 'Item', 'Especialidade', 'Medico', 'Convenio', 'Consulta', 'Calendario', 'Usuario'], // Adicione aqui os tipos de cache do seu projeto
+  // Remover tags de cache - sem cache para aplicação de aula
+  tagTypes: [],
+  // Desabilitar cache por padrão
+  keepUnusedDataFor: 0,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: () => ({}),
 })
