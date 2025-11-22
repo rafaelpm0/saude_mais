@@ -8,7 +8,8 @@ import {
   DisponibilidadeDto,
   AtualizarDisponibilidadeDto,
   ConsultaMedicoResponseDto,
-  HistoricoPacienteDto
+  HistoricoPacienteDto,
+  PacienteDto
 } from './dto/medico.dto';
 
 @Injectable()
@@ -588,53 +589,45 @@ export class MedicoService {
   /**
    * Buscar lista de pacientes (para select no modal)
    */
-  async getPacientes(busca?: string): Promise<any[]> {
-    let where: any;
+async getPacientes(busca?: string): Promise<PacienteDto[]> {
+  const todosPacientes = await this.prisma.usuario.findMany({
+    where: { tipo: 1 },
+    select: {
+      id: true,
+      nome: true,
+      cpf: true,
+      telefone: true,
+      email: true,
+      faltasConsecutivas: true
+    },
+    orderBy: { nome: 'asc' }
+  });
 
-    if (busca && busca.trim().length > 0) {
-      const buscaTrim = busca.trim().toLowerCase(); // Converter para minúsculas
-      
-      // SQLite não tem suporte nativo para case-insensitive LIKE, então precisamos buscar todos
-      // os pacientes e filtrar no JavaScript
-      const todosPacientes = await this.prisma.usuario.findMany({
-        where: { tipo: 1 },
-        select: {
-          id: true,
-          nome: true,
-          cpf: true,
-          telefone: true,
-          email: true,
-          faltasConsecutivas: true
-        },
-        orderBy: { nome: 'asc' }
-      });
-
-      // Filtrar no JavaScript (case-insensitive)
-      const pacientesFiltrados = todosPacientes.filter(p =>
-        p.nome.toLowerCase().includes(buscaTrim) ||
-        p.cpf.includes(busca.trim()) // CPF é exato
-      ).slice(0, 50); // Limitar a 50 resultados
-
-      return pacientesFiltrados;
-    }
-
-    // Sem busca, retornar apenas tipo=1 limitado
-    const pacientes = await this.prisma.usuario.findMany({
-      where: { tipo: 1 },
-      select: {
-        id: true,
-        nome: true,
-        cpf: true,
-        telefone: true,
-        email: true,
-        faltasConsecutivas: true
-      },
-      orderBy: { nome: 'asc' },
-      take: 50
-    });
-
-    return pacientes;
+  const termoBruto = busca?.trim() || "";
+  if (!termoBruto) {
+    console.log(`Busca vazia: retornando todos (${todosPacientes.length})`);
+    return todosPacientes;
   }
+
+  const termo = termoBruto.toLowerCase();
+  const termoCpf = termoBruto.replace(/\D/g, "");
+
+  const pacientesFiltrados = todosPacientes.filter((p) => {
+    const nome = (p.nome || "").toLowerCase();
+    const cpf = (p.cpf || "").replace(/\D/g, "");
+
+    const matchNome = nome.includes(termo);
+    const matchCpf = termoCpf && cpf.includes(termoCpf);
+
+    return matchNome || matchCpf;
+  });
+
+  console.log(`Busca por termo "${termoBruto}": encontrados ${pacientesFiltrados.length} pacientes.`);
+  console.log(JSON.stringify(pacientesFiltrados, null, 2));
+
+  return pacientesFiltrados;
+}
+
 
   /**
    * Buscar convênios disponíveis para o médico
@@ -642,18 +635,18 @@ export class MedicoService {
   async getConvenios(idMedico: number): Promise<any[]> {
     const usuarioMedicos = await this.prisma.usuarioMedico.findMany({
       where: { idUsuario: idMedico },
-      include: { convenio: true },
-      distinct: ['idConvenio']
+      include: { convenio: true }
     });
 
-    // Extrair convênios únicos
-    const conveniosUnicos = usuarioMedicos
-      .map(um => um.convenio)
-      .filter((conv, index, self) => 
-        index === self.findIndex(c => c.id === conv.id)
-      );
+    // Extrair convênios únicos com Map
+    const conveniosMap = new Map();
+    usuarioMedicos.forEach(um => {
+      if (!conveniosMap.has(um.convenio.id)) {
+        conveniosMap.set(um.convenio.id, um.convenio);
+      }
+    });
 
-    return conveniosUnicos;
+    return Array.from(conveniosMap.values());
   }
 
   /**
@@ -662,17 +655,17 @@ export class MedicoService {
   async getEspecialidades(idMedico: number): Promise<any[]> {
     const usuarioMedicos = await this.prisma.usuarioMedico.findMany({
       where: { idUsuario: idMedico },
-      include: { especialidade: true },
-      distinct: ['idEspecialidade']
+      include: { especialidade: true }
     });
 
-    // Extrair especialidades únicas
-    const especialidadesUnicas = usuarioMedicos
-      .map(um => um.especialidade)
-      .filter((esp, index, self) => 
-        index === self.findIndex(e => e.id === esp.id)
-      );
+    // Extrair especialidades únicas com Map
+    const especialidadesMap = new Map();
+    usuarioMedicos.forEach(um => {
+      if (!especialidadesMap.has(um.especialidade.id)) {
+        especialidadesMap.set(um.especialidade.id, um.especialidade);
+      }
+    });
 
-    return especialidadesUnicas;
+    return Array.from(especialidadesMap.values());
   }
 }

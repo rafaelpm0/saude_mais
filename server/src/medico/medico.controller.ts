@@ -23,7 +23,8 @@ import {
   AtualizarDisponibilidadeDto,
   ConsultaMedicoResponseDto,
   HistoricoPacienteDto,
-  DisponibilidadeDto
+  DisponibilidadeDto,
+  PacienteDto
 } from './dto/medico.dto';
 
 @ApiTags('medico')
@@ -33,6 +34,7 @@ import {
 export class MedicoController {
   constructor(private medicoService: MedicoService) {}
 
+  // Rotas GET sem parâmetros devem vir ANTES de rotas com parâmetros para evitar conflitos
   @Get('agenda')
   @ApiOperation({ summary: 'Buscar agenda do médico filtrada por período' })
   @ApiResponse({ status: 200, description: 'Lista de consultas e bloqueios do médico' })
@@ -41,6 +43,44 @@ export class MedicoController {
     @Request() req: any
   ): Promise<ConsultaMedicoResponseDto[]> {
     return this.medicoService.getAgendaMedico(req.user.userId, query);
+  }
+
+  @Get('disponibilidade')
+  @ApiOperation({ summary: 'Buscar disponibilidade do médico' })
+  @ApiResponse({ status: 200, description: 'Disponibilidade retornada com sucesso' })
+  async getDisponibilidade(@Request() req: any): Promise<DisponibilidadeDto[]> {
+    return this.medicoService.getDisponibilidade(req.user.userId);
+  }
+
+  @Get('pacientes')
+  @ApiOperation({ summary: 'Buscar lista de pacientes com filtro' })
+  @ApiResponse({ status: 200, description: 'Lista de pacientes retornada com sucesso' })
+  async getPacientes(@Query('busca') busca?: string): Promise<PacienteDto[]> {
+    return this.medicoService.getPacientes(busca);
+  }
+
+  @Get('convenios')
+  @ApiOperation({ summary: 'Buscar convênios disponíveis para o médico' })
+  @ApiResponse({ status: 200, description: 'Lista de convênios retornada com sucesso' })
+  async getConvenios(@Request() req: any): Promise<any[]> {
+    return this.medicoService.getConvenios(req.user.userId);
+  }
+
+  @Get('especialidades')
+  @ApiOperation({ summary: 'Buscar especialidades do médico' })
+  @ApiResponse({ status: 200, description: 'Lista de especialidades retornada com sucesso' })
+  async getEspecialidades(@Request() req: any): Promise<any[]> {
+    return this.medicoService.getEspecialidades(req.user.userId);
+  }
+
+  @Get('paciente/:id/historico')
+  @ApiOperation({ summary: 'Buscar histórico de consultas de um paciente' })
+  @ApiResponse({ status: 200, description: 'Histórico retornado com sucesso' })
+  async getHistoricoPaciente(
+    @Param('id') id: string,
+    @Request() req: any
+  ): Promise<HistoricoPacienteDto> {
+    return this.medicoService.getHistoricoPaciente(req.user.userId, parseInt(id));
   }
 
   @Post('consulta')
@@ -78,23 +118,6 @@ export class MedicoController {
     return this.medicoService.atualizarConsulta(req.user.userId, parseInt(id), dto);
   }
 
-  @Get('paciente/:id/historico')
-  @ApiOperation({ summary: 'Buscar histórico de consultas de um paciente' })
-  @ApiResponse({ status: 200, description: 'Histórico retornado com sucesso' })
-  async getHistoricoPaciente(
-    @Param('id') id: string,
-    @Request() req: any
-  ): Promise<HistoricoPacienteDto> {
-    return this.medicoService.getHistoricoPaciente(req.user.userId, parseInt(id));
-  }
-
-  @Get('disponibilidade')
-  @ApiOperation({ summary: 'Buscar disponibilidade do médico' })
-  @ApiResponse({ status: 200, description: 'Disponibilidade retornada com sucesso' })
-  async getDisponibilidade(@Request() req: any): Promise<DisponibilidadeDto[]> {
-    return this.medicoService.getDisponibilidade(req.user.userId);
-  }
-
   @Put('disponibilidade')
   @ApiOperation({ summary: 'Atualizar disponibilidade do médico' })
   @ApiResponse({ status: 200, description: 'Disponibilidade atualizada com sucesso' })
@@ -104,26 +127,5 @@ export class MedicoController {
     @Request() req: any
   ): Promise<DisponibilidadeDto[]> {
     return this.medicoService.atualizarDisponibilidade(req.user.userId, dto);
-  }
-
-  @Get('pacientes')
-  @ApiOperation({ summary: 'Buscar lista de pacientes com filtro' })
-  @ApiResponse({ status: 200, description: 'Lista de pacientes retornada com sucesso' })
-  async getPacientes(@Query('busca') busca?: string): Promise<any[]> {
-    return this.medicoService.getPacientes(busca);
-  }
-
-  @Get('convenios')
-  @ApiOperation({ summary: 'Buscar convênios disponíveis para o médico' })
-  @ApiResponse({ status: 200, description: 'Lista de convênios retornada com sucesso' })
-  async getConvenios(@Request() req: any): Promise<any[]> {
-    return this.medicoService.getConvenios(req.user.userId);
-  }
-
-  @Get('especialidades')
-  @ApiOperation({ summary: 'Buscar especialidades do médico' })
-  @ApiResponse({ status: 200, description: 'Lista de especialidades retornada com sucesso' })
-  async getEspecialidades(@Request() req: any): Promise<any[]> {
-    return this.medicoService.getEspecialidades(req.user.userId);
   }
 }

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface SearchSelectProps<T> {
   data: T[];
@@ -32,35 +33,15 @@ function SearchSelect<T>({
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
-  // Trigger search quando o termo mudar (com debounce)
+  // Trigger search quando o termo com debounce mudar
   useEffect(() => {
-    // Limpar timer anterior
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    if (debouncedSearchTerm.length >= minSearchLength && onSearch) {
+      onSearch(debouncedSearchTerm);
     }
-
-    // Se o termo for muito curto, não buscar
-    if (searchTerm.length < minSearchLength) {
-      return;
-    }
-
-    // Criar novo timer
-    debounceTimerRef.current = setTimeout(() => {
-      if (onSearch) {
-        console.log('[SearchSelect] Buscando:', searchTerm);
-        onSearch(searchTerm);
-      }
-    }, 500); // 500ms de debounce
-
-    // Cleanup
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [searchTerm, onSearch, minSearchLength]);
+  }, [debouncedSearchTerm, onSearch, minSearchLength]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -82,15 +63,10 @@ function SearchSelect<T>({
   };
 
   // Handler para limpar seleção
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onChange(null);
     setSearchTerm('');
-    setIsOpen(false);
-  };
-
-  // Handler para abrir dropdown e focar no input
-  const handleOpenSearch = () => {
-    setIsOpen(true);
   };
 
   return (
@@ -134,9 +110,9 @@ function SearchSelect<T>({
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setIsOpen(true);
+              if (!isOpen) setIsOpen(true);
             }}
-            onFocus={handleOpenSearch}
+            onFocus={() => setIsOpen(true)}
             disabled={disabled || isLoading}
           />
         )}

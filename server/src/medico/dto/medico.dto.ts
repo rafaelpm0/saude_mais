@@ -120,6 +120,7 @@ export interface ConsultaMedicoResponseDto {
   id: number;
   observacao?: string;
   status: string;
+  tipo?: 'consulta' | 'bloqueio';
   agenda: {
     id: number;
     dtaInicial: Date;
@@ -142,7 +143,18 @@ export interface ConsultaMedicoResponseDto {
     id: number;
     descricao: string;
   };
-  tipo?: 'consulta' | 'bloqueio'; // Para diferenciar no frontend
+}
+
+/**
+ * DTO para resposta de paciente
+ */
+export interface PacienteDto {
+  id: number;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  email: string;
+  faltasConsecutivas: number;
 }
 
 /**

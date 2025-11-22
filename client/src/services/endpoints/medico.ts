@@ -80,7 +80,7 @@ export const medicoApi = api.injectEndpoints({
     // Buscar lista de pacientes com filtro
     getPacientes: builder.query<Paciente[], string | void>({
       query: (busca) => ({
-        url: busca ? `medico/pacientes?busca=${encodeURIComponent(busca)}` : 'medico/pacientes',
+        url: busca ? `medico/pacientes?busca=${busca}` : 'medico/pacientes',
         method: 'GET'
       }),
       keepUnusedDataFor: 0 // Não fazer cache, sempre buscar fresco

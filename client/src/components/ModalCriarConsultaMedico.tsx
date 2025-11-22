@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   useCriarConsultaMedicoMutation,
   useLazyGetPacientesQuery,
@@ -29,70 +29,39 @@ function ModalCriarConsultaMedico({ onClose, onSuccess }: ModalCriarConsultaMedi
 
   const [criarConsulta, { isLoading: isCreating }] = useCriarConsultaMedicoMutation();
 
-  // Log para debug dos pacientes
-  useEffect(() => {
-    if (pacientes) {
-      console.log('[ModalCriarConsulta] Pacientes recebidos:', pacientes);
-    }
-  }, [pacientes]);
-
   // Handler para buscar pacientes
   const handleBuscarPacientes = useCallback((termo: string) => {
-    console.log('[ModalCriarConsulta] handleBuscarPacientes chamado com:', termo);
     if (termo.length >= 2) {
-      console.log('[ModalCriarConsulta] Disparando getPacientes...');
       getPacientes(termo);
-    } else {
-      console.log('[ModalCriarConsulta] Termo muito curto, não buscando');
     }
   }, [getPacientes]);
 
   // Validar formulário
-  const validarFormulario = (): boolean => {
-    if (!pacienteSelecionado) {
-      toast.error('Selecione um paciente');
-      return false;
-    }
-
-    if (!idEspecialidade) {
-      toast.error('Selecione uma especialidade');
-      return false;
-    }
-
-    if (!idConvenio) {
-      toast.error('Selecione um convênio');
-      return false;
-    }
-
-    if (!dataHora) {
-      toast.error('Informe a data e hora da consulta');
-      return false;
-    }
-
-    // Validar se data não está no passado
-    const dataConsulta = new Date(dataHora);
-    const agora = new Date();
+  const validarFormulario = (): string | null => {
+    if (!pacienteSelecionado) return 'Selecione um paciente';
+    if (pacienteSelecionado.faltasConsecutivas >= 3) return 'Paciente bloqueado por faltas consecutivas';
+    if (!idEspecialidade) return 'Selecione uma especialidade';
+    if (!idConvenio) return 'Selecione um convênio';
+    if (!dataHora) return 'Informe a data e hora da consulta';
     
-    if (dataConsulta < agora) {
-      toast.error('Não é possível criar consulta no passado');
-      return false;
-    }
+    const dataConsulta = new Date(dataHora);
+    if (dataConsulta < new Date()) return 'Não é possível criar consulta no passado';
+    if (duracao < 15) return 'Duração mínima de 15 minutos';
 
-    if (duracao < 15) {
-      toast.error('Duração mínima de 15 minutos');
-      return false;
-    }
-
-    return true;
+    return null;
   };
 
   // Handler para salvar consulta
   const handleSalvar = async () => {
-    if (!validarFormulario()) return;
+    const erro = validarFormulario();
+    if (erro) {
+      toast.error(erro);
+      return;
+    }
 
     try {
       const dataHoraInicio = new Date(dataHora);
-      const dataHoraFim = new Date(dataHoraInicio.getTime() + duracao * 60000); // Adicionar duração em ms
+      const dataHoraFim = new Date(dataHoraInicio.getTime() + duracao * 60000);
 
       await criarConsulta({
         idPaciente: pacienteSelecionado!.id,
@@ -100,7 +69,7 @@ function ModalCriarConsultaMedico({ onClose, onSuccess }: ModalCriarConsultaMedi
         idConvenio,
         dataHoraInicio: dataHoraInicio.toISOString(),
         dataHoraFim: dataHoraFim.toISOString(),
-        observacao: observacao || undefined
+        observacao: observacao.trim() || undefined
       }).unwrap();
 
       toast.success('Consulta criada com sucesso!');
@@ -157,7 +126,7 @@ function ModalCriarConsultaMedico({ onClose, onSuccess }: ModalCriarConsultaMedi
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Paciente está bloqueado por faltas consecutivas. A consulta não poderá ser criada.</span>
+              <span>Paciente bloqueado por {pacienteSelecionado.faltasConsecutivas} faltas consecutivas</span>
             </div>
           )}
 
