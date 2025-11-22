@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useGetAgendaMedicoQuery } from '../services/endpoints/medico';
+import { useGetAgendaMedicoQuery, useDeletarBloqueioMutation } from '../services/endpoints/medico';
 import type { ConsultaMedico } from '../types/types';
 import { toast } from '../components/ui/toast';
 import ModalAtenderConsulta from '../components/ModalAtenderConsulta';
@@ -42,6 +42,9 @@ function MedicoAgenda() {
     { skip: !dataInicio || !dataFim }
   );
 
+  // Mutation para deletar bloqueio
+  const [deletarBloqueio] = useDeletarBloqueioMutation();
+
   // Agrupar consultas por dia
   const consultasAgrupadas = useMemo(() => {
     if (!consultas) return {};
@@ -79,10 +82,11 @@ function MedicoAgenda() {
 
   // Formatar horário
   const formatarHorario = (dataStr: string) => {
-    // Extrair horário diretamente da string ISO sem conversão de timezone
-    // Formato: "2025-11-28T11:00:00.000Z" -> "11:00"
-    const horaMinuto = dataStr.split('T')[1].substring(0, 5);
-    return horaMinuto;
+    // As datas estão salvas em UTC mas representam horário local
+    const date = new Date(dataStr);
+    const hora = String(date.getUTCHours()).padStart(2, '0');
+    const minuto = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${hora}:${minuto}`;
   };
 
   // Obter classe CSS do status
@@ -106,6 +110,21 @@ function MedicoAgenda() {
       case 'C': return 'Cancelada';
       case 'R': return 'Bloqueado';
       default: return status;
+    }
+  };
+
+  // Função para deletar bloqueio
+  const handleDeletarBloqueio = async (consultaId: number) => {
+    if (!confirm('Tem certeza que deseja deletar este bloqueio?')) {
+      return;
+    }
+    
+    try {
+      await deletarBloqueio(consultaId).unwrap();
+      toast.success('Bloqueio deletado com sucesso!');
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Erro ao deletar bloqueio');
     }
   };
 
@@ -213,11 +232,25 @@ function MedicoAgenda() {
                           {/* Informações */}
                           {consulta.tipo === 'bloqueio' ? (
                             <>
-                              <div className="flex items-center gap-1 mt-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                                <span className="text-xs font-semibold">BLOQUEADO</span>
+                              <div className="flex items-center justify-between gap-1 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                  <span className="text-xs font-semibold">BLOQUEADO</span>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletarBloqueio(consulta.id);
+                                  }}
+                                  className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error hover:text-white"
+                                  title="Deletar bloqueio"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
                               </div>
                               {consulta.observacao && (
                                 <p className="text-xs mt-1 text-base-content text-opacity-70 line-clamp-2">

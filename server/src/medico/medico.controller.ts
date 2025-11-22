@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -127,5 +128,18 @@ export class MedicoController {
     @Request() req: any
   ): Promise<DisponibilidadeDto[]> {
     return this.medicoService.atualizarDisponibilidade(req.user.userId, dto);
+  }
+
+  @Delete('bloqueio/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deletar bloqueio de horário' })
+  @ApiResponse({ status: 204, description: 'Bloqueio deletado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Não é possível deletar uma consulta normal' })
+  @ApiResponse({ status: 404, description: 'Bloqueio não encontrado' })
+  async deletarBloqueio(
+    @Param('id') id: string,
+    @Request() req: any
+  ): Promise<void> {
+    return this.medicoService.deletarBloqueio(req.user.userId, parseInt(id));
   }
 }

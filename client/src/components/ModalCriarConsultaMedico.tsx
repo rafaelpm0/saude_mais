@@ -60,15 +60,27 @@ function ModalCriarConsultaMedico({ onClose, onSuccess }: ModalCriarConsultaMedi
     }
 
     try {
+      // Parse da data sem conversão de timezone
       const dataHoraInicio = new Date(dataHora);
       const dataHoraFim = new Date(dataHoraInicio.getTime() + duracao * 60000);
+
+      // Formatar datas no formato local sem timezone
+      const formatarDataLocal = (date: Date) => {
+        const ano = date.getFullYear();
+        const mes = String(date.getMonth() + 1).padStart(2, '0');
+        const dia = String(date.getDate()).padStart(2, '0');
+        const hora = String(date.getHours()).padStart(2, '0');
+        const minuto = String(date.getMinutes()).padStart(2, '0');
+        const segundo = String(date.getSeconds()).padStart(2, '0');
+        return `${ano}-${mes}-${dia}T${hora}:${minuto}:${segundo}`;
+      };
 
       await criarConsulta({
         idPaciente: pacienteSelecionado!.id,
         idEspecialidade,
         idConvenio,
-        dataHoraInicio: dataHoraInicio.toISOString(),
-        dataHoraFim: dataHoraFim.toISOString(),
+        dataHoraInicio: formatarDataLocal(dataHoraInicio),
+        dataHoraFim: formatarDataLocal(dataHoraFim),
         observacao: observacao.trim() || undefined
       }).unwrap();
 

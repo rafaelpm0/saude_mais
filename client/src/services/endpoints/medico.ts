@@ -102,6 +102,14 @@ export const medicoApi = api.injectEndpoints({
         method: 'GET'
       }),
       keepUnusedDataFor: 600 // Cache de 10 minutos
+    }),
+
+    // Deletar bloqueio de horário
+    deletarBloqueio: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `medico/bloqueio/${id}`,
+        method: 'DELETE'
+      })
     })
   }),
   overrideExisting: false
@@ -120,5 +128,6 @@ export const {
   useGetPacientesQuery,
   useLazyGetPacientesQuery,
   useGetConveniosMedicoQuery,
-  useGetEspecialidadesMedicoQuery
+  useGetEspecialidadesMedicoQuery,
+  useDeletarBloqueioMutation
 } = medicoApi;

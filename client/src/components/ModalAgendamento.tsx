@@ -157,7 +157,8 @@ function ModalAgendamento({ isOpen, onClose, onSuccess }: ModalAgendamentoProps)
 
   const onSubmit = async (data: AgendamentoFormData) => {
     try {
-      const dataHora = `${data.data}T${data.hora}:00.000Z`;
+      // Enviar data/hora sem conversão de timezone (sem o .000Z no final)
+      const dataHora = `${data.data}T${data.hora}:00`;
       
       await criarConsulta({
         idMedico: parseInt(data.medico),

@@ -60,11 +60,17 @@ function Agendamento() {
   };
 
   const formatDateTime = (dateString: string) => {
-    // Remove o 'Z' para tratar como horário local, não UTC
-    const date = new Date(dateString.replace('Z', ''));
+    // As datas estão salvas em UTC mas representam horário local
+    const date = new Date(dateString);
+    const dia = String(date.getUTCDate()).padStart(2, '0');
+    const mes = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const ano = date.getUTCFullYear();
+    const hora = String(date.getUTCHours()).padStart(2, '0');
+    const minuto = String(date.getUTCMinutes()).padStart(2, '0');
+    
     return {
-      date: date.toLocaleDateString('pt-BR'),
-      time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      date: `${dia}/${mes}/${ano}`,
+      time: `${hora}:${minuto}`
     };
   };
 

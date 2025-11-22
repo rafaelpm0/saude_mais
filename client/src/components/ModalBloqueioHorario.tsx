@@ -60,8 +60,9 @@ function ModalBloqueioHorario({ onClose, onSuccess }: ModalBloqueioHorarioProps)
     if (!validarFormulario()) return;
 
     try {
-      const dataHoraInicio = new Date(`${data}T${horaInicio}:00`).toISOString();
-      const dataHoraFim = new Date(`${data}T${horaFim}:00`).toISOString();
+      // Enviar data no formato local sem conversão de timezone
+      const dataHoraInicio = `${data}T${horaInicio}:00`;
+      const dataHoraFim = `${data}T${horaFim}:00`;
 
       await criarBloqueio({
         dataHoraInicio,

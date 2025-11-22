@@ -145,10 +145,15 @@ export class ConsultasService {
     }
 
     // Buscar agendas existentes para esta data
-    const inicioData = new Date(dataConsulta);
-    inicioData.setHours(0, 0, 0, 0);
-    const fimData = new Date(dataConsulta);
-    fimData.setHours(23, 59, 59, 999);
+    // Criar datas em UTC para corresponder ao formato salvo no banco
+    const ano = dataConsulta.getFullYear();
+    const mes = dataConsulta.getMonth();
+    const dia = dataConsulta.getDate();
+    
+    const inicioData = new Date(Date.UTC(ano, mes, dia, 0, 0, 0, 0));
+    const fimData = new Date(Date.UTC(ano, mes, dia, 23, 59, 59, 999));
+
+    console.log(`Buscando agendas para médico ${idMedico} entre ${inicioData} e ${fimData}`);
 
     const agendasExistentes = await this.prisma.agenda.findMany({
       where: {
@@ -157,10 +162,19 @@ export class ConsultasService {
           gte: inicioData,
           lte: fimData
         },
-        status: 'A' // Apenas agendas ativas
+        status: {
+          in: ['A', 'R'] // Agendas ativas e reservadas pelo médico
+        }
       },
       orderBy: { dtaInicial: 'asc' }
     });
+
+    console.log(`Encontradas ${agendasExistentes.length} agendas:`, agendasExistentes.map(a => ({
+      id: a.id,
+      dtaInicial: a.dtaInicial,
+      dtaFinal: a.dtaFinal,
+      status: a.status
+    })));
 
     // Gerar slots disponíveis
     const agora = new Date();
@@ -207,11 +221,19 @@ export class ConsultasService {
     }
 
     // Converter agendas para minutos para facilitar cálculos
-    const agendamentosMinutos = agendasExistentes.map(agenda => ({
-      inicio: agenda.dtaInicial.getHours() * 60 + agenda.dtaInicial.getMinutes(),
-      fim: agenda.dtaFinal.getHours() * 60 + agenda.dtaFinal.getMinutes(),
-      paciente: 'Ocupado' // Poderia buscar o nome do paciente se necessário
-    }));
+    // Usar UTC para extrair horas/minutos pois as datas estão salvas em UTC
+    const agendamentosMinutos = agendasExistentes.map(agenda => {
+      const inicioMin = agenda.dtaInicial.getUTCHours() * 60 + agenda.dtaInicial.getUTCMinutes();
+      const fimMin = agenda.dtaFinal.getUTCHours() * 60 + agenda.dtaFinal.getUTCMinutes();
+      console.log(`Agenda bloqueada: ${agenda.dtaInicial.toISOString()} (UTC ${agenda.dtaInicial.getUTCHours()}:${agenda.dtaInicial.getUTCMinutes()}) -> ${inicioMin}-${fimMin} minutos`);
+      return {
+        inicio: inicioMin,
+        fim: fimMin,
+        status: agenda.status
+      };
+    });
+
+    console.log(`Total de agendas bloqueando: ${agendamentosMinutos.length}`);
 
     // Algoritmo de preenchimento sequencial
     let minutoAtual = inicioMinutos;
@@ -227,20 +249,20 @@ export class ConsultasService {
       });
 
       if (temConflito) {
-        // Encontrar o próximo horário livre após o conflito
+        // Pular para o próximo slot após o conflito
         const proximoLivre = agendamentosMinutos
-          .filter(a => a.inicio >= minutoAtual)
-          .sort((a, b) => a.inicio - b.inicio)[0];
+          .filter(a => a.fim > minutoAtual)
+          .sort((a, b) => a.fim - b.fim)[0];
 
-        if (proximoLivre) {
+        if (proximoLivre && proximoLivre.fim > minutoAtual) {
           minutoAtual = proximoLivre.fim;
         } else {
           minutoAtual += tempoConsulta;
         }
-        continue;
+        continue; // NÃO adiciona o slot ocupado à lista
       }
 
-      // Slot disponível
+      // Slot disponível - adiciona apenas se NÃO tem conflito
       slots.push({
         hora: horaFormatada,
         disponivel: true
@@ -248,6 +270,8 @@ export class ConsultasService {
 
       minutoAtual += tempoConsulta;
     }
+
+    console.log(`Gerados ${slots.length} slots disponíveis:`, slots.map(s => s.hora));
 
     return slots;
   }
@@ -257,7 +281,8 @@ export class ConsultasService {
     const { idMedico, idEspecialidade, idConvenio, dataHora, observacao } = dto;
 
     // Validar se a data não é no passado
-    const dataConsulta = new Date(dataHora);
+    // Parse como UTC para manter consistência
+    const dataConsulta = new Date(dataHora + (dataHora.endsWith('Z') ? '' : 'Z'));
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     

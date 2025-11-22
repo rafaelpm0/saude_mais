@@ -141,8 +141,14 @@ export class MedicoService {
     idMedico: number,
     dto: CriarConsultaMedicoDto
   ): Promise<ConsultaMedicoResponseDto> {
-    const dataInicio = new Date(dto.dataHoraInicio);
-    const dataFim = new Date(dto.dataHoraFim);
+    // Parse de data local sem conversão de timezone
+    const parseLocalAsUTC = (dateStr: string) => {
+      const clean = dateStr.replace('Z', '');
+      return new Date(clean + 'Z');
+    };
+    
+    const dataInicio = parseLocalAsUTC(dto.dataHoraInicio);
+    const dataFim = parseLocalAsUTC(dto.dataHoraFim);
 
     // Validações básicas
     if (dataInicio >= dataFim) {
@@ -250,8 +256,17 @@ export class MedicoService {
     idMedico: number,
     dto: CriarBloqueioDto
   ): Promise<ConsultaMedicoResponseDto> {
-    const dataInicio = new Date(dto.dataHoraInicio);
-    const dataFim = new Date(dto.dataHoraFim);
+    // Parse de data local sem conversão de timezone
+    // Adiciona 'Z' ao final para que seja interpretado como UTC, mas na verdade é horário local
+    // Isso evita que o Node.js aplique conversão de timezone
+    const parseLocalAsUTC = (dateStr: string) => {
+      // Remove Z se existir e adiciona de volta para forçar interpretação como UTC
+      const clean = dateStr.replace('Z', '');
+      return new Date(clean + 'Z');
+    };
+    
+    const dataInicio = parseLocalAsUTC(dto.dataHoraInicio);
+    const dataFim = parseLocalAsUTC(dto.dataHoraFim);
 
     // Validações básicas
     if (dataInicio >= dataFim) {
@@ -667,5 +682,40 @@ async getPacientes(busca?: string): Promise<PacienteDto[]> {
     });
 
     return Array.from(especialidadesMap.values());
+  }
+
+  /**
+   * Deletar bloqueio de horário
+   */
+  async deletarBloqueio(idMedico: number, idConsulta: number): Promise<void> {
+    const consulta = await this.prisma.consulta.findUnique({
+      where: { id: idConsulta },
+      include: { agenda: true }
+    });
+
+    if (!consulta) {
+      throw new NotFoundException('Bloqueio não encontrado');
+    }
+
+    // Verificar se é bloqueio do médico
+    if (consulta.agenda.idMedico !== idMedico) {
+      throw new BadRequestException('Você só pode deletar seus próprios bloqueios');
+    }
+
+    // Verificar se é realmente um bloqueio (status 'R')
+    if (consulta.status !== 'R') {
+      throw new BadRequestException('Apenas bloqueios podem ser deletados. Use cancelar para consultas normais.');
+    }
+
+    // Deletar em transação
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.consulta.delete({
+        where: { id: idConsulta }
+      });
+
+      await prisma.agenda.delete({
+        where: { id: consulta.agenda.id }
+      });
+    });
   }
 }
