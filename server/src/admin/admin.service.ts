@@ -10,7 +10,10 @@ import {
   ConvenioResponseDto,
   CreateMedicoDto,
   UpdateMedicoDto,
-  MedicoResponseDto
+  MedicoResponseDto,
+  CreateUsuarioDto,
+  UpdateUsuarioDto,
+  UsuarioResponseDto
 } from './dto/admin.dto';
 
 @Injectable()
@@ -447,16 +450,16 @@ export class AdminService {
 
   async getUsuarios() {
     const usuarios = await this.prisma.usuario.findMany({
-      where: { tipo: { in: [1, 2] } },
+      where: { tipo: { in: [1, 2, 3] } },
       select: {
         id: true, nome: true, cpf: true, email: true, telefone: true,
-        tipo: true, faltasConsecutivas: true
+        tipo: true, faltasConsecutivas: true, crm: true, login: true
       },
       orderBy: { nome: 'asc' }
     });
     return usuarios.map(u => ({
       ...u,
-      tipoDescricao: u.tipo === 1 ? 'Paciente' : 'Médico',
+      tipoDescricao: u.tipo === 1 ? 'Paciente' : u.tipo === 2 ? 'Médico' : 'Admin',
       status: u.faltasConsecutivas >= 3 ? 'Bloqueado' : 'Normal'
     }));
   }
@@ -469,5 +472,245 @@ export class AdminService {
       where: { id },
       data: { faltasConsecutivas: 0 }
     });
+  }
+
+  // ========== USUÁRIOS (GENÉRICO) ==========
+
+  /**
+   * Criar novo usuário (Médico, Paciente ou Admin)
+   */
+  async createUsuario(dto: CreateUsuarioDto): Promise<UsuarioResponseDto> {
+    // Validar tipo de usuário
+    if (![1, 2, 3].includes(dto.tipo)) {
+      throw new BadRequestException('Tipo de usuário inválido. Use 1=Paciente, 2=Médico, 3=Admin');
+    }
+
+    // Validações específicas para médicos
+    if (dto.tipo === 2) {
+      if (!dto.crm) {
+        throw new BadRequestException('CRM é obrigatório para médicos');
+      }
+      if (!dto.especialidades || dto.especialidades.length === 0) {
+        throw new BadRequestException('Médico deve ter pelo menos uma especialidade');
+      }
+      for (const esp of dto.especialidades) {
+        if (!esp.convenioIds || esp.convenioIds.length === 0) {
+          throw new BadRequestException('Cada especialidade deve ter pelo menos um convênio');
+        }
+      }
+    }
+
+    try {
+      // Hash da senha
+      const hashedPassword = await bcrypt.hash(dto.senha, 10);
+
+      // Usar transação
+      const result = await this.prisma.$transaction(async (prisma) => {
+        // Criar usuário
+        const usuario = await prisma.usuario.create({
+          data: {
+            nome: dto.nome,
+            cpf: dto.cpf,
+            email: dto.email,
+            telefone: dto.telefone,
+            login: dto.login,
+            senha: hashedPassword,
+            tipo: dto.tipo,
+            crm: dto.tipo === 2 ? dto.crm : null,
+            faltasConsecutivas: 0
+          }
+        });
+
+        // Se for médico, criar relacionamentos UsuarioMedico
+        if (dto.tipo === 2 && dto.especialidades) {
+          const relacionamentos = [];
+          for (const esp of dto.especialidades) {
+            for (const convenioId of esp.convenioIds) {
+              relacionamentos.push({
+                idUsuario: usuario.id,
+                idEspecialidade: esp.especialidadeId,
+                idConvenio: convenioId,
+                tempoConsulta: esp.tempoConsulta
+              });
+            }
+          }
+
+          await prisma.usuarioMedico.createMany({
+            data: relacionamentos
+          });
+        }
+
+        return usuario;
+      });
+
+      // Buscar usuário com relacionamentos se for médico
+      if (dto.tipo === 2) {
+        return await this.getUsuarioById(result.id);
+      }
+
+      // Retornar usuário simples para paciente/admin
+      return {
+        id: result.id,
+        nome: result.nome,
+        cpf: result.cpf,
+        email: result.email,
+        telefone: result.telefone,
+        login: result.login,
+        tipo: result.tipo,
+        tipoDescricao: result.tipo === 1 ? 'Paciente' : result.tipo === 2 ? 'Médico' : 'Admin',
+        crm: result.crm || undefined,
+        faltasConsecutivas: result.faltasConsecutivas,
+        status: result.faltasConsecutivas >= 3 ? 'Bloqueado' : 'Normal'
+      };
+    } catch (error) {
+      throw new BadRequestException('Erro ao criar usuário');
+    }
+  }
+
+  /**
+   * Atualizar usuário (NÃO permite mudança de tipo)
+   */
+  async updateUsuario(id: number, dto: UpdateUsuarioDto): Promise<UsuarioResponseDto> {
+    // Verificar se usuário existe e obter tipo atual
+    const usuarioExistente = await this.prisma.usuario.findUnique({
+      where: { id }
+    });
+
+    if (!usuarioExistente) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const tipoUsuario = usuarioExistente.tipo;
+
+    // Validações específicas para médicos
+    if (tipoUsuario === 2) {
+      if (!dto.crm) {
+        throw new BadRequestException('CRM é obrigatório para médicos');
+      }
+      if (!dto.especialidades || dto.especialidades.length === 0) {
+        throw new BadRequestException('Médico deve ter pelo menos uma especialidade');
+      }
+      for (const esp of dto.especialidades) {
+        if (!esp.convenioIds || esp.convenioIds.length === 0) {
+          throw new BadRequestException('Cada especialidade deve ter pelo menos um convênio');
+        }
+      }
+    }
+
+    try {
+      const result = await this.prisma.$transaction(async (prisma) => {
+        // Dados para atualização
+        const updateData: any = {
+          nome: dto.nome,
+          cpf: dto.cpf,
+          email: dto.email,
+          telefone: dto.telefone,
+          login: dto.login
+        };
+
+        // Atualizar senha apenas se fornecida
+        if (dto.senha) {
+          updateData.senha = await bcrypt.hash(dto.senha, 10);
+        }
+
+        // Atualizar CRM apenas para médicos
+        if (tipoUsuario === 2) {
+          updateData.crm = dto.crm;
+        }
+
+        // Atualizar usuário
+        const usuario = await prisma.usuario.update({
+          where: { id },
+          data: updateData
+        });
+
+        // Se for médico, atualizar relacionamentos
+        if (tipoUsuario === 2 && dto.especialidades) {
+          // Deletar todos os relacionamentos existentes
+          await prisma.usuarioMedico.deleteMany({
+            where: { idUsuario: id }
+          });
+
+          // Criar novos relacionamentos
+          const relacionamentos = [];
+          for (const esp of dto.especialidades) {
+            for (const convenioId of esp.convenioIds) {
+              relacionamentos.push({
+                idUsuario: usuario.id,
+                idEspecialidade: esp.especialidadeId,
+                idConvenio: convenioId,
+                tempoConsulta: esp.tempoConsulta
+              });
+            }
+          }
+
+          await prisma.usuarioMedico.createMany({
+            data: relacionamentos
+          });
+        }
+
+        return usuario;
+      });
+
+      // Buscar usuário atualizado com relacionamentos
+      return await this.getUsuarioById(result.id);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+      throw new BadRequestException('Erro ao atualizar usuário');
+    }
+  }
+
+  /**
+   * Buscar usuário por ID com relacionamentos (se médico)
+   */
+  async getUsuarioById(id: number): Promise<UsuarioResponseDto> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      include: {
+        medicoEspecialidades: {
+          include: {
+            especialidade: true,
+            convenio: true
+          }
+        }
+      }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const response: UsuarioResponseDto = {
+      id: usuario.id,
+      nome: usuario.nome,
+      cpf: usuario.cpf,
+      email: usuario.email,
+      telefone: usuario.telefone,
+      login: usuario.login,
+      tipo: usuario.tipo,
+      tipoDescricao: usuario.tipo === 1 ? 'Paciente' : usuario.tipo === 2 ? 'Médico' : 'Admin',
+      crm: usuario.crm || undefined,
+      faltasConsecutivas: usuario.faltasConsecutivas,
+      status: usuario.faltasConsecutivas >= 3 ? 'Bloqueado' : 'Normal'
+    };
+
+    // Adicionar especialidades se for médico
+    if (usuario.tipo === 2) {
+      response.especialidades = usuario.medicoEspecialidades.map(me => ({
+        especialidade: {
+          id: me.especialidade.id,
+          descricao: me.especialidade.descricao
+        },
+        convenio: {
+          id: me.convenio.id,
+          nome: me.convenio.nome
+        },
+        tempoConsulta: me.tempoConsulta
+      }));
+    }
+
+    return response;
   }
 }

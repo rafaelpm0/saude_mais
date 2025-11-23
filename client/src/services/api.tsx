@@ -28,8 +28,8 @@ export const api = createApi({
       return headers;
     },
   }),
-  // Remover tags de cache - sem cache para aplicação de aula
-  tagTypes: [],
+  // Tags para invalidação de cache
+  tagTypes: ['Usuarios', 'Medicos', 'Especialidades', 'Convenios'],
   // Desabilitar cache por padrão
   keepUnusedDataFor: 0,
   refetchOnFocus: true,

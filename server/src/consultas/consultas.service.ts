@@ -109,7 +109,7 @@ export class ConsultasService {
 
     // Validar se a data não é no passado
     const partesData = data.split('-');
-    const dataConsulta = new Date(parseInt(partesData[0]), parseInt(partesData[1]) - 1, parseInt(partesData[2]));
+    const dataConsulta = new Date(Date.UTC(parseInt(partesData[0]), parseInt(partesData[1]) - 1, parseInt(partesData[2])));
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     
@@ -130,7 +130,7 @@ export class ConsultasService {
     }
 
     const tempoConsulta = usuarioMedico.tempoConsulta;
-    const diaSemana = dataConsulta.getDay(); // JavaScript: 0=Dom, 1=Seg, 2=Ter, etc.
+    const diaSemana = dataConsulta.getUTCDay(); // JavaScript: 0=Dom, 1=Seg, 2=Ter, etc. (usar UTC)
 
     // Buscar disponibilidade do médico para este dia da semana
     const disponibilidade = await this.prisma.dispMedico.findFirst({
@@ -146,9 +146,9 @@ export class ConsultasService {
 
     // Buscar agendas existentes para esta data
     // Criar datas em UTC para corresponder ao formato salvo no banco
-    const ano = dataConsulta.getFullYear();
-    const mes = dataConsulta.getMonth();
-    const dia = dataConsulta.getDate();
+    const ano = dataConsulta.getUTCFullYear();
+    const mes = dataConsulta.getUTCMonth();
+    const dia = dataConsulta.getUTCDate();
     
     const inicioData = new Date(Date.UTC(ano, mes, dia, 0, 0, 0, 0));
     const fimData = new Date(Date.UTC(ano, mes, dia, 23, 59, 59, 999));
@@ -207,11 +207,11 @@ export class ConsultasService {
 
     // Se for hoje, verificar se o horário já passou
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const isHoje = dataConsulta.getTime() === hoje.getTime();
+    const hojeUTC = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate()));
+    const isHoje = dataConsulta.getTime() === hojeUTC.getTime();
     
     if (isHoje) {
-      const horaAtualMinutos = agora.getHours() * 60 + agora.getMinutes();
+      const horaAtualMinutos = hoje.getUTCHours() * 60 + hoje.getUTCMinutes();
       // Adicionar margem de 30 minutos para agendamento
       const margemMinutos = horaAtualMinutos + 30;
       

@@ -183,3 +183,139 @@ export class MedicoResponseDto {
     tempoConsulta: number;
   }[];
 }
+
+// DTO para Usuário (Genérico)
+export class CreateUsuarioDto {
+  @ApiProperty({ description: 'Nome completo do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  nome: string;
+
+  @ApiProperty({ description: 'CPF do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  cpf: string;
+
+  @ApiProperty({ description: 'Email do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ description: 'Telefone do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  telefone: string;
+
+  @ApiProperty({ description: 'Login do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  login: string;
+
+  @ApiProperty({ description: 'Senha do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  senha: string;
+
+  @ApiProperty({ description: 'Tipo do usuário (1=Paciente, 2=Médico, 3=Admin)' })
+  @IsInt()
+  @Min(1)
+  tipo: number;
+
+  @ApiProperty({ description: 'CRM do usuário (obrigatório apenas para médicos)', required: false })
+  @IsOptional()
+  @IsString()
+  crm?: string;
+
+  @ApiProperty({ description: 'Especialidades e convênios (obrigatório apenas para médicos)', type: [MedicoEspecialidadeDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MedicoEspecialidadeDto)
+  especialidades?: MedicoEspecialidadeDto[];
+}
+
+export class UpdateUsuarioDto {
+  @ApiProperty({ description: 'Nome completo do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  nome: string;
+
+  @ApiProperty({ description: 'CPF do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  cpf: string;
+
+  @ApiProperty({ description: 'Email do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ description: 'Telefone do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  telefone: string;
+
+  @ApiProperty({ description: 'Login do usuário' })
+  @IsString()
+  @IsNotEmpty()
+  login: string;
+
+  @ApiProperty({ description: 'Senha do usuário', required: false })
+  @IsOptional()
+  @IsString()
+  senha?: string;
+
+  @ApiProperty({ description: 'CRM do usuário (obrigatório apenas para médicos)', required: false })
+  @IsOptional()
+  @IsString()
+  crm?: string;
+
+  @ApiProperty({ description: 'Especialidades e convênios (obrigatório apenas para médicos)', type: [MedicoEspecialidadeDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MedicoEspecialidadeDto)
+  especialidades?: MedicoEspecialidadeDto[];
+}
+
+export class UsuarioResponseDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  nome: string;
+
+  @ApiProperty()
+  cpf: string;
+
+  @ApiProperty()
+  email: string;
+
+  @ApiProperty()
+  telefone: string;
+
+  @ApiProperty()
+  login: string;
+
+  @ApiProperty()
+  tipo: number;
+
+  @ApiProperty()
+  tipoDescricao: string;
+
+  @ApiProperty()
+  crm?: string;
+
+  @ApiProperty()
+  faltasConsecutivas?: number;
+
+  @ApiProperty()
+  status?: string;
+
+  @ApiProperty({ required: false })
+  especialidades?: {
+    especialidade: { id: number; descricao: string };
+    convenio: { id: number; nome: string };
+    tempoConsulta: number;
+  }[];
+}

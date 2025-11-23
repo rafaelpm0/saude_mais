@@ -55,10 +55,40 @@ export interface Usuario {
   cpf: string;
   email: string;
   telefone: string;
+  login: string;
   tipo: number;
   tipoDescricao: string;
+  crm?: string;
   faltasConsecutivas: number;
   status: string;
+  especialidades?: {
+    especialidade: { id: number; descricao: string };
+    convenio: { id: number; nome: string };
+    tempoConsulta: number;
+  }[];
+}
+
+export interface CreateUsuarioRequest {
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  login: string;
+  senha: string;
+  tipo: number;
+  crm?: string;
+  especialidades?: MedicoEspecialidade[];
+}
+
+export interface UpdateUsuarioRequest {
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  login: string;
+  senha?: string;
+  crm?: string;
+  especialidades?: MedicoEspecialidade[];
 }
 
 export interface CreateMedicoRequest {
@@ -154,7 +184,7 @@ export const adminApi = api.injectEndpoints({
     // ========== MÉDICOS ==========
     getMedicos: builder.query<Medico[], void>({
       query: () => 'admin/medicos',
-      // Sem cache para aplicação de aula
+      providesTags: ['Medicos'],
     }),
 
     getMedicoById: builder.query<Medico, number>({
@@ -191,7 +221,25 @@ export const adminApi = api.injectEndpoints({
     // ========== USUÁRIOS ==========
     getUsuarios: builder.query<Usuario[], void>({
       query: () => 'admin/usuarios',
-      // Sem cache para aplicação de aula
+      providesTags: ['Usuarios'],
+    }),
+
+    createUsuario: builder.mutation<Usuario, CreateUsuarioRequest>({
+      query: (data) => ({
+        url: 'admin/usuarios',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Usuarios', 'Medicos'],
+    }),
+
+    updateUsuario: builder.mutation<Usuario, { id: number; data: UpdateUsuarioRequest }>({
+      query: ({ id, data }) => ({
+        url: `admin/usuarios/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Usuarios', 'Medicos'],
     }),
 
     resetarFaltasUsuario: builder.mutation<Usuario, number>({
@@ -228,5 +276,7 @@ export const {
 
   // Usuários
   useGetUsuariosQuery,
+  useCreateUsuarioMutation,
+  useUpdateUsuarioMutation,
   useResetarFaltasUsuarioMutation,
 } = adminApi;

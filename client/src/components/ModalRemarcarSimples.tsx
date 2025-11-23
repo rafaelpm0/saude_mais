@@ -112,7 +112,7 @@ function ModalRemarcarSimples({ isOpen, onClose, onSuccess, consulta }: ModalRem
       await atualizarConsulta({
         id: consulta.id,
         data: {
-          dataHora: `${data.data}T${data.hora}`
+          dataHora: `${data.data}T${data.hora}:00.000Z`
         }
       }).unwrap();
 
@@ -269,19 +269,26 @@ function ModalRemarcarSimples({ isOpen, onClose, onSuccess, consulta }: ModalRem
                 {availableSlots.length > 0 ? (
                   availableSlots
                     .filter(slot => slot.disponivel)
-                    .map((slot) => (
-                      <label key={slot.hora} className="cursor-pointer">
-                        <input
-                          type="radio"
-                          value={slot.hora}
-                          {...register('hora', { required: 'Selecione um horário' })}
-                          className="sr-only"
-                        />
-                        <div className="p-2 text-center border rounded hover:bg-blue-50 peer-checked:bg-blue-500 peer-checked:text-white">
-                          {slot.hora}
-                        </div>
-                      </label>
-                    ))
+                    .map((slot) => {
+                      const isSelected = watch('hora') === slot.hora;
+                      return (
+                        <label key={slot.hora} className="cursor-pointer">
+                          <input
+                            type="radio"
+                            value={slot.hora}
+                            {...register('hora', { required: 'Selecione um horário' })}
+                            className="sr-only"
+                          />
+                          <div className={`p-2 text-center border rounded transition-all ${
+                            isSelected 
+                              ? 'bg-blue-500 text-white border-blue-600 shadow-md' 
+                              : 'bg-white border-gray-300 hover:bg-blue-50 hover:border-blue-300'
+                          }`}>
+                            {slot.hora}
+                          </div>
+                        </label>
+                      );
+                    })
                 ) : (
                   <p className="col-span-3 text-center text-gray-500 py-4">
                     Nenhum horário disponível

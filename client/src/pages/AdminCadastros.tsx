@@ -3,22 +3,24 @@ import { toast } from 'react-toastify';
 import { DataTable } from '../components/ui/DataTable';
 import ModalCadastroEspecialidade from '../components/ModalCadastroEspecialidade';
 import ModalCadastroConvenio from '../components/ModalCadastroConvenio';
-import ModalCadastroMedico from '../components/ModalCadastroMedico';
+import ModalCadastroUsuario from '../components/ModalCadastroUsuario';
 import { useDebounce } from '../hooks/useDebounce';
 import {
   useGetEspecialidadesQuery,
   useGetConveniosQuery,
   useGetMedicosQuery,
+  useGetUsuariosQuery,
   useDeleteEspecialidadeMutation,
   useDeleteConvenioMutation,
   useDeleteMedicoMutation,
   type Especialidade,
   type Convenio,
-  type Medico
+  type Medico,
+  type Usuario
 } from '../services/endpoints/admin';
 import './AdminCadastros.css';
 
-type CategoriaAtiva = 'medicos' | 'especialidades' | 'convenios';
+type CategoriaAtiva = 'medicos' | 'especialidades' | 'convenios' | 'usuarios';
 
 function AdminCadastros() {
   // ========== ESTADOS ==========
@@ -28,6 +30,9 @@ function AdminCadastros() {
   const [filtroMedicoNome, setFiltroMedicoNome] = useState('');
   const [filtroMedicoCrm, setFiltroMedicoCrm] = useState('');
   const [filtroMedicoEspecialidade, setFiltroMedicoEspecialidade] = useState('');
+  const [filtroUsuarioNome, setFiltroUsuarioNome] = useState('');
+  const [filtroUsuarioCpf, setFiltroUsuarioCpf] = useState('');
+  const [filtroUsuarioTipo, setFiltroUsuarioTipo] = useState('');
 
   // Modais
   const [modalEspecialidade, setModalEspecialidade] = useState<{
@@ -40,9 +45,9 @@ function AdminCadastros() {
     convenio?: Convenio;
   }>({ isOpen: false });
 
-  const [modalMedico, setModalMedico] = useState<{
+  const [modalUsuario, setModalUsuario] = useState<{
     isOpen: boolean;
-    medico?: Medico;
+    usuario?: Usuario;
   }>({ isOpen: false });
 
   // Modal de confirmação de exclusão
@@ -72,11 +77,14 @@ function AdminCadastros() {
   const debouncedFiltroConvenio = useDebounce(filtroConvenio, 500);
   const debouncedFiltroMedicoNome = useDebounce(filtroMedicoNome, 500);
   const debouncedFiltroMedicoCrm = useDebounce(filtroMedicoCrm, 500);
+  const debouncedFiltroUsuarioNome = useDebounce(filtroUsuarioNome, 500);
+  const debouncedFiltroUsuarioCpf = useDebounce(filtroUsuarioCpf, 500);
 
   // ========== QUERIES ==========
   const { data: especialidades = [], isLoading: loadingEspecialidades } = useGetEspecialidadesQuery();
   const { data: convenios = [], isLoading: loadingConvenios } = useGetConveniosQuery();
   const { data: medicos = [], isLoading: loadingMedicos } = useGetMedicosQuery();
+  const { data: usuarios = [], isLoading: loadingUsuarios } = useGetUsuariosQuery();
 
   // ========== MUTATIONS ==========
   const [deleteEspecialidade] = useDeleteEspecialidadeMutation();
@@ -124,11 +132,41 @@ function AdminCadastros() {
     return resultado;
   }, [medicos, debouncedFiltroMedicoNome, debouncedFiltroMedicoCrm, filtroMedicoEspecialidade]);
 
+  const usuariosFiltrados = useMemo(() => {
+    let resultado = usuarios;
+
+    if (debouncedFiltroUsuarioNome) {
+      resultado = resultado.filter(usuario => 
+        usuario.nome.toLowerCase().includes(debouncedFiltroUsuarioNome.toLowerCase())
+      );
+    }
+
+    if (debouncedFiltroUsuarioCpf) {
+      resultado = resultado.filter(usuario => 
+        usuario.cpf.toLowerCase().includes(debouncedFiltroUsuarioCpf.toLowerCase())
+      );
+    }
+
+    if (filtroUsuarioTipo) {
+      resultado = resultado.filter(usuario => 
+        usuario.tipo.toString() === filtroUsuarioTipo
+      );
+    }
+
+    return resultado;
+  }, [usuarios, debouncedFiltroUsuarioNome, debouncedFiltroUsuarioCpf, filtroUsuarioTipo]);
+
   // ========== HANDLERS ==========
   const limparFiltrosMedicos = () => {
     setFiltroMedicoNome('');
     setFiltroMedicoCrm('');
     setFiltroMedicoEspecialidade('');
+  };
+
+  const limparFiltrosUsuarios = () => {
+    setFiltroUsuarioNome('');
+    setFiltroUsuarioCpf('');
+    setFiltroUsuarioTipo('');
   };
 
   const limparFiltroEspecialidade = () => {
@@ -142,6 +180,7 @@ function AdminCadastros() {
   const temFiltrosMedicos = filtroMedicoNome || filtroMedicoCrm || filtroMedicoEspecialidade;
   const temFiltroEspecialidade = filtroEspecialidade;
   const temFiltroConvenio = filtroConvenio;
+  const temFiltrosUsuarios = filtroUsuarioNome || filtroUsuarioCpf || filtroUsuarioTipo;
 
   const handleDeleteEspecialidade = (especialidade: Especialidade) => {
     setConfirmDelete({
@@ -307,7 +346,7 @@ function AdminCadastros() {
         <div className="admin-actions flex gap-2">
           <button
             className="admin-action-btn btn btn-sm btn-primary"
-            onClick={() => setModalMedico({ isOpen: true, medico: rowData })}
+            onClick={() => setModalUsuario({ isOpen: true, usuario: rowData as any })}
           >
             Editar
           </button>
@@ -316,6 +355,51 @@ function AdminCadastros() {
             onClick={() => handleDeleteMedico(rowData)}
           >
             Excluir
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const colunasUsuarios = [
+    { header: 'ID', accessor: 'id' },
+    { header: 'Nome', accessor: 'nome' },
+    { header: 'CPF', accessor: 'cpf' },
+    { header: 'Email', accessor: 'email' },
+    { 
+      header: 'Tipo', 
+      accessor: 'tipoDescricao',
+      render: (_: unknown, rowData: Usuario) => (
+        <span className={`badge badge-sm ${
+          rowData.tipo === 1 ? 'badge-info' : 
+          rowData.tipo === 2 ? 'badge-success' : 
+          'badge-warning'
+        }`}>
+          {rowData.tipoDescricao}
+        </span>
+      )
+    },
+    { 
+      header: 'Status', 
+      accessor: 'status',
+      render: (_: unknown, rowData: Usuario) => (
+        <span className={`badge badge-sm ${
+          rowData.status === 'Bloqueado' ? 'badge-error' : 'badge-success'
+        }`}>
+          {rowData.status}
+        </span>
+      )
+    },
+    {
+      header: 'Ações',
+      accessor: 'acoes',
+      render: (_: unknown, rowData: Usuario) => (
+        <div className="admin-actions flex gap-2">
+          <button
+            className="admin-action-btn btn btn-sm btn-primary"
+            onClick={() => setModalUsuario({ isOpen: true, usuario: rowData })}
+          >
+            Editar
           </button>
         </div>
       ),
@@ -341,55 +425,82 @@ function AdminCadastros() {
           Cadastros Administrativos
         </h1>
         <p className="text-sm text-gray-600 mt-1 mb-4">
-          Gerencie especialidades, convênios e médicos do sistema
+          Gerencie especialidades, convênios, médicos e usuários do sistema
         </p>
         
-        {/* Seletor de categorias */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        {/* Seletor de categorias com botão de cadastro */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 max-w-[1150px]">
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={`btn btn-sm transition-all duration-200 ${
+                categoriaAtiva === 'medicos'
+                  ? 'btn-primary shadow-md'
+                  : 'btn-outline btn-primary hover:btn-primary'
+              }`}
+              onClick={() => setCategoriaAtiva('medicos')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Médicos
+              <span className="badge badge-sm ml-1">{medicosFiltrados.length}</span>
+            </button>
+            <button
+              className={`btn btn-sm transition-all duration-200 ${
+                categoriaAtiva === 'especialidades'
+                  ? 'btn-secondary shadow-md'
+                  : 'btn-outline btn-secondary hover:btn-secondary'
+              }`}
+              onClick={() => setCategoriaAtiva('especialidades')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+              Especialidades
+              <span className="badge badge-sm ml-1">{especialidadesFiltradas.length}</span>
+            </button>
+            <button
+              className={`btn btn-sm transition-all duration-200 ${
+                categoriaAtiva === 'convenios'
+                  ? 'btn-accent shadow-md'
+                  : 'btn-outline btn-accent hover:btn-accent'
+              }`}
+              onClick={() => setCategoriaAtiva('convenios')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Convênios
+              <span className="badge badge-sm ml-1">{conveniosFiltrados.length}</span>
+            </button>
+            <button
+              className={`btn btn-sm transition-all duration-200 ${
+                categoriaAtiva === 'usuarios'
+                  ? 'btn-info shadow-md'
+                  : 'btn-outline btn-info hover:btn-info'
+              }`}
+              onClick={() => setCategoriaAtiva('usuarios')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              Usuários
+              <span className="badge badge-sm ml-1">{usuariosFiltrados.length}</span>
+            </button>
+          </div>
+          
+          {/* Botão de Cadastrar Usuário */}
           <button
-            className={`btn btn-sm transition-all duration-200 ${
-              categoriaAtiva === 'medicos'
-                ? 'btn-primary shadow-md'
-                : 'btn-outline btn-primary hover:btn-primary'
-            }`}
-            onClick={() => setCategoriaAtiva('medicos')}
+            className="admin-button btn btn-success btn-sm sm:btn-md flex-shrink-0 sm:ml-auto"
+            onClick={() => setModalUsuario({ isOpen: true })}
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Médicos
-            <span className="badge badge-sm ml-1">{medicosFiltrados.length}</span>
-          </button>
-          <button
-            className={`btn btn-sm transition-all duration-200 ${
-              categoriaAtiva === 'especialidades'
-                ? 'btn-secondary shadow-md'
-                : 'btn-outline btn-secondary hover:btn-secondary'
-            }`}
-            onClick={() => setCategoriaAtiva('especialidades')}
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-            </svg>
-            Especialidades
-            <span className="badge badge-sm ml-1">{especialidadesFiltradas.length}</span>
-          </button>
-          <button
-            className={`btn btn-sm transition-all duration-200 ${
-              categoriaAtiva === 'convenios'
-                ? 'btn-accent shadow-md'
-                : 'btn-outline btn-accent hover:btn-accent'
-            }`}
-            onClick={() => setCategoriaAtiva('convenios')}
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Convênios
-            <span className="badge badge-sm ml-1">{conveniosFiltrados.length}</span>
+            Cadastrar Usuário
           </button>
         </div>
-      </div> 
+      </div>
       
       {/* Renderização condicional baseada na categoria ativa */}
       <div className="w-full max-w-6xl">
@@ -409,15 +520,6 @@ function AdminCadastros() {
                     {medicosFiltrados.length} médico{medicosFiltrados.length !== 1 ? 's' : ''} encontrado{medicosFiltrados.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <button
-                  className="admin-button btn btn-primary btn-sm sm:btn-md flex-shrink-0"
-                  onClick={() => setModalMedico({ isOpen: true })}
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Adicionar Médico
-                </button>
               </div>
 
               {/* Filtros responsivos com badge limpar */}
@@ -514,15 +616,6 @@ function AdminCadastros() {
                     {especialidadesFiltradas.length} especialidade{especialidadesFiltradas.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <button
-                  className="admin-button btn btn-secondary btn-sm sm:btn-md flex-shrink-0"
-                  onClick={() => setModalEspecialidade({ isOpen: true })}
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Adicionar Especialidade
-                </button>
               </div>
 
               {/* Filtro com badge limpar */}
@@ -586,15 +679,6 @@ function AdminCadastros() {
                     {conveniosFiltrados.length} convênio{conveniosFiltrados.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <button
-                  className="admin-button btn btn-accent btn-sm sm:btn-md flex-shrink-0"
-                  onClick={() => setModalConvenio({ isOpen: true })}
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Adicionar Convênio
-                </button>
               </div>
 
               {/* Filtro com badge limpar */}
@@ -641,6 +725,100 @@ function AdminCadastros() {
             </div>
           </div>
         )}
+
+        {/* ========== USUÁRIOS ========== */}
+        {categoriaAtiva === 'usuarios' && (
+          <div className="admin-card card bg-base-100 shadow-lg border border-gray-200">
+            <div className="card-body p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <div>
+                  <h2 className="card-title text-lg sm:text-xl flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Usuários
+                  </h2>
+                  <p className="admin-counter text-xs text-gray-500 mt-1">
+                    {usuariosFiltrados.length} usuário{usuariosFiltrados.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Filtros responsivos com badge limpar */}
+              <div className="relative mb-4">
+                {temFiltrosUsuarios && (
+                  <button
+                    onClick={limparFiltrosUsuarios}
+                    className="absolute -top-1 right-0 badge badge-error badge-xs cursor-pointer hover:badge-error z-10 transition-transform hover:scale-110 p-2"
+                    title="Limpar filtros"
+                  >
+                    <svg className="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Limpar filtros
+                  </button>
+                )}
+                <div className="admin-filters bg-gray-50 p-3 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="form-control">
+                      <label className="label py-1">
+                        <span className="admin-label label-text text-xs font-medium">Nome</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome..."
+                        className="admin-filter-input admin-input input input-bordered input-sm w-full"
+                        value={filtroUsuarioNome}
+                        onChange={(e) => setFiltroUsuarioNome(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label py-1">
+                        <span className="admin-label label-text text-xs font-medium">CPF</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Buscar por CPF..."
+                        className="admin-filter-input admin-input input input-bordered input-sm w-full"
+                        value={filtroUsuarioCpf}
+                        onChange={(e) => setFiltroUsuarioCpf(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-control sm:col-span-2 lg:col-span-1">
+                      <label className="label py-1">
+                        <span className="admin-label label-text text-xs font-medium">Tipo</span>
+                      </label>
+                      <select
+                        className="admin-filter-input admin-input select select-bordered select-sm w-full"
+                        value={filtroUsuarioTipo}
+                        onChange={(e) => setFiltroUsuarioTipo(e.target.value)}
+                      >
+                        <option value="">Todos os tipos</option>
+                        <option value="1">Paciente</option>
+                        <option value="2">Médico</option>
+                        <option value="3">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-table-container">
+                {loadingUsuarios ? (
+                  <div className="admin-skeleton">
+                    <SkeletonTable />
+                  </div>
+                ) : (
+                  <DataTable
+                    data={usuariosFiltrados}
+                    columns={colunasUsuarios}
+                    isLoading={loadingUsuarios}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ========== MODAIS ========== */}
@@ -656,10 +834,10 @@ function AdminCadastros() {
         convenio={modalConvenio.convenio}
       />
 
-      <ModalCadastroMedico
-        isOpen={modalMedico.isOpen}
-        onClose={() => setModalMedico({ isOpen: false })}
-        medico={modalMedico.medico}
+      <ModalCadastroUsuario
+        isOpen={modalUsuario.isOpen}
+        onClose={() => setModalUsuario({ isOpen: false })}
+        usuario={modalUsuario.usuario}
       />
 
       {/* Modal de Confirmação de Exclusão */}

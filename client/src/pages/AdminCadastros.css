@@ -97,12 +97,26 @@
 
 /* ===== SELETOR DE CATEGORIAS ===== */
 
-/* Estilo para os botões do seletor */
+/* Estilo para os botões do seletor - agora com 4 categorias */
 .categoria-selector {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+}
+
+/* Container para botões de categoria + botão de cadastro */
+.admin-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .admin-header > div {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .categoria-btn {

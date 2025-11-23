@@ -23,7 +23,10 @@ import {
   ConvenioResponseDto,
   CreateMedicoDto,
   UpdateMedicoDto,
-  MedicoResponseDto
+  MedicoResponseDto,
+  CreateUsuarioDto,
+  UpdateUsuarioDto,
+  UsuarioResponseDto
 } from './dto/admin.dto';
 
 @ApiTags('admin')
@@ -170,8 +173,32 @@ export class AdminController {
 
   @Get('usuarios')
   @ApiOperation({ summary: 'Listar todos os usuários' })
+  @ApiResponse({ status: 200, description: 'Lista de usuários retornada com sucesso.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado. Apenas administradores.' })
   async getUsuarios() {
     return this.adminService.getUsuarios();
+  }
+
+  @Post('usuarios')
+  @ApiOperation({ summary: 'Criar novo usuário (Médico, Paciente ou Admin)' })
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.', type: UsuarioResponseDto })
+  @ApiResponse({ status: 400, description: 'Dados inválidos. Médicos devem ter CRM e especialidades.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado. Apenas administradores.' })
+  async createUsuario(@Body() dto: CreateUsuarioDto): Promise<UsuarioResponseDto> {
+    return this.adminService.createUsuario(dto);
+  }
+
+  @Put('usuarios/:id')
+  @ApiOperation({ summary: 'Atualizar usuário' })
+  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso.', type: UsuarioResponseDto })
+  @ApiResponse({ status: 400, description: 'Dados inválidos. Médicos devem ter CRM e especialidades.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  @ApiResponse({ status: 403, description: 'Acesso negado. Apenas administradores.' })
+  async updateUsuario(
+    @Param('id') id: string,
+    @Body() dto: UpdateUsuarioDto
+  ): Promise<UsuarioResponseDto> {
+    return this.adminService.updateUsuario(parseInt(id), dto);
   }
 
   @Put('usuarios/:id/resetar-faltas')

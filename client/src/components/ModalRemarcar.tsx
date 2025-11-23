@@ -301,8 +301,8 @@ function ModalRemarcar({ isOpen, onClose, onSuccess, consulta }: ModalRemarcarPr
                               />
                               <div className={`btn btn-sm w-full transition-all ${
                                 isSelected 
-                                  ? 'btn-primary' 
-                                  : 'btn-outline hover:btn-primary'
+                                  ? 'btn-primary shadow-md scale-105' 
+                                  : 'btn-outline hover:btn-primary hover:scale-105'
                               }`}>
                                 {slot.hora}
                               </div>
