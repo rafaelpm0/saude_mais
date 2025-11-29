@@ -7,6 +7,7 @@ import Welcome from './pages/Welcome'
 import Agendamento from './pages/Agendamento'
 import AdminCadastros from './pages/AdminCadastros'
 import BloqueioUsuarios from './pages/BloqueioUsuarios'
+import Relatorios from './pages/Relatorios'
 import MedicoAgenda from './pages/MedicoAgenda'
 import MedicoDisponibilidade from './pages/MedicoDisponibilidade'
 import Header from './components/header'
@@ -78,6 +79,9 @@ function App() {
           } />
           <Route path="/bloqueio-usuarios" element={
             isAuthenticated && user?.tipo === 3 ? <BloqueioUsuarios /> : <Welcome />
+          } />
+          <Route path="/relatorios" element={
+            isAuthenticated && user?.tipo === 3 ? <Relatorios /> : <Welcome />
           } />
           <Route path="/medico/agenda" element={
             isAuthenticated && user?.tipo === 2 ? <MedicoAgenda /> : <Welcome />

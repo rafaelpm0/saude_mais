@@ -54,7 +54,7 @@ function AdminCadastros() {
   const [confirmDelete, setConfirmDelete] = useState<{
     isOpen: boolean;
     type: 'medico' | 'especialidade' | 'convenio' | null;
-    item: any;
+    item: Medico | Especialidade | Convenio | null;
     onConfirm: (() => void) | null;
   }>({ isOpen: false, type: null, item: null, onConfirm: null });
 

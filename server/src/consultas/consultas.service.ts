@@ -693,6 +693,43 @@ export class ConsultasService {
 
     // Atualizar consulta e agenda
     await this.prisma.$transaction(async (prisma) => {
+      // Se está alterando data/hora, marcar como transferido primeiro
+      if (dto.dataHora) {
+        // Marcar consulta atual como Transferida (T)
+        await prisma.consulta.update({
+          where: { id },
+          data: { status: 'T' }
+        });
+
+        await prisma.agenda.update({
+          where: { id: consulta.agenda.id },
+          data: { status: 'T' }
+        });
+
+        const novaData = new Date(dto.dataHora);
+        // Buscar tempo de consulta (assumindo que não mudou)
+        const usuarioMedico = await prisma.usuarioMedico.findFirst({
+          where: { idUsuario: consulta.agenda.idMedico }
+        });
+        
+        const novaDataFinal = new Date(novaData.getTime() + (usuarioMedico?.tempoConsulta || 30) * 60000);
+
+        // Atualizar para nova data e voltar para Ativo
+        await prisma.agenda.update({
+          where: { id: consulta.agenda.id },
+          data: {
+            dtaInicial: novaData,
+            dtaFinal: novaDataFinal,
+            status: 'A' // Nova data volta para status Ativo
+          }
+        });
+        
+        await prisma.consulta.update({
+          where: { id },
+          data: { status: 'A' } // Nova data volta para status Ativo
+        });
+      }
+
       if (dto.observacao !== undefined) {
         await prisma.consulta.update({
           where: { id },
@@ -700,7 +737,7 @@ export class ConsultasService {
         });
       }
 
-      if (dto.status) {
+      if (dto.status && !dto.dataHora) { // Só aplica status se não for remarcação
         await prisma.consulta.update({
           where: { id },
           data: { status: dto.status }
@@ -718,24 +755,6 @@ export class ConsultasService {
             data: { faltasConsecutivas: 0 }
           });
         }
-      }
-
-      if (dto.dataHora) {
-        const novaData = new Date(dto.dataHora);
-        // Buscar tempo de consulta (assumindo que não mudou)
-        const usuarioMedico = await prisma.usuarioMedico.findFirst({
-          where: { idUsuario: consulta.agenda.idMedico }
-        });
-        
-        const novaDataFinal = new Date(novaData.getTime() + (usuarioMedico?.tempoConsulta || 30) * 60000);
-
-        await prisma.agenda.update({
-          where: { id: consulta.agenda.id },
-          data: {
-            dtaInicial: novaData,
-            dtaFinal: novaDataFinal
-          }
-        });
       }
     });
 

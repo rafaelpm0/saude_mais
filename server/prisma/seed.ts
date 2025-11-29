@@ -405,6 +405,126 @@ async function seed() {
       })
     ]);
 
+    // Consultas adicionais para testes de relatórios
+    // Consulta transferida (remarcada) - semana passada
+    const dataTransferida1 = new Date();
+    dataTransferida1.setDate(dataTransferida1.getDate() - 7);
+    dataTransferida1.setHours(10, 0, 0, 0);
+
+    const agenda6 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente2.id,
+        dtaInicial: dataTransferida1,
+        dtaFinal: new Date(dataTransferida1.getTime() + 30 * 60000),
+        status: 'T' // Transferida
+      }
+    });
+
+    await prisma.consulta.create({
+      data: {
+        idAgenda: agenda6.id,
+        idConvenio: 2, // Unimed
+        observacao: 'Consulta remarcada pelo paciente',
+        status: 'T'
+      }
+    });
+
+    // Consulta transferida (remarcada) - 2 semanas atrás
+    const dataTransferida2 = new Date();
+    dataTransferida2.setDate(dataTransferida2.getDate() - 14);
+    dataTransferida2.setHours(15, 30, 0, 0);
+
+    const agenda7 = await prisma.agenda.create({
+      data: {
+        idMedico: medico2.id,
+        idCliente: paciente1.id,
+        dtaInicial: dataTransferida2,
+        dtaFinal: new Date(dataTransferida2.getTime() + 45 * 60000),
+        status: 'T' // Transferida
+      }
+    });
+
+    await prisma.consulta.create({
+      data: {
+        idAgenda: agenda7.id,
+        idConvenio: 3, // Bradesco
+        observacao: 'Remarcação - conflito de horário',
+        status: 'T'
+      }
+    });
+
+    // Consulta falta (não compareceu) - 5 dias atrás
+    const dataFalta = new Date();
+    dataFalta.setDate(dataFalta.getDate() - 5);
+    dataFalta.setHours(9, 0, 0, 0);
+
+    const agenda8 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente1.id,
+        dtaInicial: dataFalta,
+        dtaFinal: new Date(dataFalta.getTime() + 30 * 60000),
+        status: 'N' // Não compareceu
+      }
+    });
+
+    await prisma.consulta.create({
+      data: {
+        idAgenda: agenda8.id,
+        idConvenio: 1, // SUS
+        observacao: 'Paciente não compareceu',
+        status: 'N'
+      }
+    });
+
+    // Mais consultas finalizadas para estatísticas
+    const dataFinalizada2 = new Date();
+    dataFinalizada2.setDate(dataFinalizada2.getDate() - 10);
+    dataFinalizada2.setHours(14, 0, 0, 0);
+
+    const agenda9 = await prisma.agenda.create({
+      data: {
+        idMedico: medico1.id,
+        idCliente: paciente2.id,
+        dtaInicial: dataFinalizada2,
+        dtaFinal: new Date(dataFinalizada2.getTime() + 60 * 60000),
+        status: 'F' // Finalizada
+      }
+    });
+
+    await prisma.consulta.create({
+      data: {
+        idAgenda: agenda9.id,
+        idConvenio: 2, // Unimed
+        observacao: 'Consulta cardiológica - exame de rotina',
+        status: 'F'
+      }
+    });
+
+    const dataFinalizada3 = new Date();
+    dataFinalizada3.setDate(dataFinalizada3.getDate() - 15);
+    dataFinalizada3.setHours(16, 0, 0, 0);
+
+    const agenda10 = await prisma.agenda.create({
+      data: {
+        idMedico: medico2.id,
+        idCliente: paciente2.id,
+        dtaInicial: dataFinalizada3,
+        dtaFinal: new Date(dataFinalizada3.getTime() + 45 * 60000),
+        status: 'F' // Finalizada
+      }
+    });
+
+    await prisma.consulta.create({
+      data: {
+        idAgenda: agenda10.id,
+        idConvenio: 3, // Bradesco
+        observacao: 'Consulta pediátrica - vacinação',
+        status: 'F'
+      }
+    });
+
     console.log('✅ Seed executado com sucesso!');
     console.log('\n📊 Dados criados:');
     console.log(`📋 ${especialidades.length} Especialidades`);
@@ -412,7 +532,7 @@ async function seed() {
     console.log(`👤 2 Pacientes, 2 Médicos, 1 Admin`);
     console.log(`👨‍⚕️ 9 Combinações Médico+Especialidade+Convênio`);
     console.log(`📅 8 Disponibilidades configuradas`);
-    console.log(`📝 5 Consultas com diferentes status criadas`);
+    console.log(`📝 10 Consultas com diferentes status criadas (A, F, C, N, T)`);
     
     console.log('\n👨‍⚕️ Médicos e suas especialidades:');
     console.log('• Dra. Ana Santos (CRM12345):');
@@ -425,10 +545,11 @@ async function seed() {
     console.log('  - Disponível: Ter-Qui 14h-18h, Sáb 8h-12h');
 
     console.log('\n📝 Consultas criadas para teste:');
-    console.log('• 2 Consultas futuras ativas (amanhã e próxima semana)');
-    console.log('• 1 Consulta no passado (será marcada como falta automaticamente)');
-    console.log('• 1 Consulta finalizada (ontem)');
+    console.log('• 2 Consultas futuras ativas');
+    console.log('• 3 Consultas finalizadas');
     console.log('• 1 Consulta cancelada');
+    console.log('• 2 Consultas transferidas/remarcadas');
+    console.log('• 2 Consultas com falta (não compareceu)');
 
     console.log('\n📋 Credenciais para teste:');
     console.log('Pacientes:');

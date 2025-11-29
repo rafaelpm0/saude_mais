@@ -27,6 +27,6 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Escuta em todas as interfaces
-  await app.listen(5000, '0.0.0.0');
+  await app.listen(3000, '0.0.0.0');
 }
 bootstrap();
