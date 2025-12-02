@@ -2,7 +2,8 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-    testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
+    rootDir: '.',
+    testMatch: ['**/test/**/*.e2e-spec.ts', '**/?(*.)+(spec|test).[tj]s?(x)'],
     transform: {
       '^.+\\.tsx?$': 'ts-jest',
     },
@@ -10,5 +11,8 @@ module.exports = {
       'ts-jest': {
         tsconfig: 'tsconfig.json',
       },
+    },
+    moduleNameMapper: {
+      '^src/(.*)$': '<rootDir>/src/$1',
     },
   };

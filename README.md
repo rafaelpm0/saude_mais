@@ -20,6 +20,8 @@ Este é um sistema completo de gerenciamento de clínica médica com React (fron
 - **React Hook Form** para formulários
 - **Vitest** para testes
 
+**📝 Documentação Detalhada de Testes:** [Ver README do Frontend](./client/README.md)
+
 ### Estrutura Mantida
 - ✅ Header com navegação lateral (drawer)
 - ✅ Sistema de tema claro/escuro
@@ -44,6 +46,8 @@ Este é um sistema completo de gerenciamento de clínica médica com React (fron
 - **Class Validator** para validação
 - **Jest** para testes
 
+**📝 Documentação Detalhada de Testes:** [Ver README do Backend](./server/README.md)
+
 ### Estrutura Base
 - ✅ Configuração básica do NestJS
 - ✅ Swagger configurado
@@ -59,10 +63,24 @@ Este é um sistema completo de gerenciamento de clínica médica com React (fron
 
 ## Como Executar
 
-### Backend
+### Backend - Primeira Execução
 ```bash
 cd server
-npm install
+npm install                     # Instalar dependências
+npx prisma generate             # Gerar Prisma Client
+npx prisma migrate dev          # Executar migrações do banco
+npm run seed                    # Popular banco com dados iniciais
+npm run start:dev               # Iniciar servidor
+```
+
+**Credenciais após o seed:**
+- **Admin**: `admin@teste.com` / Senha: `12345678`
+- **Paciente**: `paciente@teste.com` / Senha: `12345678`
+- **Médico**: `medico@teste.com` / Senha: `12345678`
+
+### Backend - Execuções Posteriores
+```bash
+cd server
 npm run start:dev
 ```
 
@@ -77,15 +95,45 @@ npm run dev
 
 ### Backend
 - `npm run start:dev` - Modo desenvolvimento
+- `npm run build` - Build para produção
 - `npm run prisma:generate` - Gerar client Prisma
 - `npm run prisma:migrate` - Executar migrações
-- `npm run test` - Executar testes
+- `npm run seed` - Popular banco com dados iniciais
+- `npm run test` - Executar todos os testes
+- `npm run test:watch` - Executar testes em modo watch
+- `npm run test:cov` - Executar testes com cobertura
 
 ### Frontend
 - `npm run dev` - Modo desenvolvimento
 - `npm run build` - Build para produção  
 - `npm run test` - Executar testes
+- `npm run test:watch` - Executar testes em modo watch
 - `npm run lint` - Verificar código
+
+## Testes
+
+### Estrutura de Testes do Backend
+O projeto possui testes E2E (end-to-end) simples para as principais rotas:
+
+**Arquivos de teste:**
+- `test/auth.e2e-spec.ts` - Testes de autenticação (login/register)
+- `test/consultas.e2e-spec.ts` - Testes de consultas e agendamentos
+- `test/admin.e2e-spec.ts` - Testes do módulo administrativo
+
+**Cobertura de testes:**
+- ✅ Autenticação e autorização
+- ✅ Validação de dados de entrada
+- ✅ Proteção de rotas com JWT
+- ✅ Controle de acesso por tipo de usuário
+- ✅ Operações CRUD básicas
+
+**Executar testes:**
+```bash
+cd server
+npm run test           # Executar todos os testes
+npm run test:watch     # Modo watch
+npm run test:cov       # Com cobertura
+```
 
 ## APIs e Endpoints
 

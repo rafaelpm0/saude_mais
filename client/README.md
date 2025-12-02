@@ -1,54 +1,158 @@
-# React + TypeScript + Vite
+# Frontend - Sistema Saúde Mais
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🧪 Testes
 
-Currently, two official plugins are available:
+Este projeto utiliza **Vitest** como framework de testes, junto com **@testing-library/react** para testes de componentes.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Estrutura de Testes
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+src/
+├── utils/
+│   └── userUtils.test.ts          # Testes de funções utilitárias
+├── components/
+│   └── ui/
+│       └── modal.test.tsx         # Testes de componentes UI
+├── pages/
+│   └── Login.test.tsx             # Testes de páginas
+└── App.test.tsx                   # Testes de nível de aplicação
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 📋 Cobertura de Testes
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+#### 1. **Testes de Utilidades** (`userUtils.test.ts`)
+**9 testes** que validam:
+- ✅ `getTipoNome()` - Mapeamento de tipos de usuário
+  - Retorna "Paciente" para tipo 1
+  - Retorna "Médico(a)" para tipo 2
+  - Retorna "Administrador(a)" para tipo 3
+  - Retorna "Usuário" para tipo inválido
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+- ✅ `isValidUser()` - Validação de objetos de usuário
+  - Valida usuário completo com todos os campos
+  - Rejeita usuário com campos faltando
+  - Rejeita usuário com tipo inválido
+  - Rejeita null ou undefined
+  - Rejeita objeto vazio
+
+#### 2. **Testes de Componentes** (`modal.test.tsx`)
+**3 testes** que validam:
+- ✅ Renderização do botão com label correto
+- ✅ Exibição do conteúdo do modal
+- ✅ Criação do dialog com ID único
+
+#### 3. **Testes de Páginas** (`Login.test.tsx`)
+**3 testes** que validam:
+- ✅ Renderização completa do formulário de login
+  - Campos de CPF/Email e Senha
+  - Botão de login
+  - Botão de cadastro
+  - Link para voltar
+
+- ✅ Validação de campos vazios
+  - Exibe mensagem "Preencha todos os campos"
+  - Previne submit com campos incompletos
+
+- ✅ Presença de elementos de cadastro
+  - Botão "Cadastrar como Paciente"
+
+#### 4. **Testes de Aplicação** (`App.test.tsx`)
+**2 testes** que validam:
+- ✅ Renderização sem erros
+  - App carrega corretamente
+  - Providers Redux e Router funcionam
+
+- ✅ Roteamento baseado em autenticação
+  - Renderiza página Welcome quando não autenticado
+  - Verifica estado de autenticação
+
+### 🚀 Comandos de Teste
+
+```bash
+# Executar todos os testes
+npm run test
+
+# Executar testes em modo watch (reexecuta ao salvar)
+npm run test:watch
+
+# Executar testes com UI interativa do Vitest
+npm run test:ui
+
+# Executar testes com cobertura
+npm run test:cov
 ```
+
+### 📊 Resultados Atuais
+
+```
+Test Files  4 passed (4)
+Tests      17 passed (17)
+Duration   ~4s
+```
+
+**Taxa de Sucesso: 100%** ✅
+
+### 🛠️ Tecnologias de Teste
+
+- **Vitest** - Framework de testes rápido e moderno
+- **@testing-library/react** - Utilitários para testar componentes React
+- **@testing-library/user-event** - Simulação de interações do usuário
+- **happy-dom** - Ambiente DOM leve para Node.js
+
+### 📝 Padrões de Teste Utilizados
+
+1. **Arrange-Act-Assert** - Estrutura clara de testes
+2. **Component Testing** - Testes isolados de componentes
+3. **Integration Testing** - Testes com Redux e Router integrados
+4. **User-Centric Testing** - Testes focados na experiência do usuário
+
+### 🔧 Configuração
+
+Os testes estão configurados em:
+- `vitest.config.ts` - Configuração principal do Vitest
+- `vitest.setup.ts` - Setup global (limpeza após cada teste)
+
+### 📖 Exemplo de Teste
+
+```typescript
+it('deve validar usuário completo', () => {
+  const user: UsuarioLogado = {
+    cpf: '12345678900',
+    email: 'test@test.com',
+    nome: 'Teste',
+    tipo: 1,
+    nomeTipo: 'Paciente'
+  };
+  
+  expect(isValidUser(user)).toBe(true);
+});
+```
+
+### 🎯 Próximos Passos
+
+Áreas sugeridas para expansão de testes:
+- [ ] Testes de componentes do módulo de Agendamento
+- [ ] Testes de componentes administrativos
+- [ ] Testes E2E com Playwright
+- [ ] Testes de hooks customizados
+- [ ] Testes de integração com API
+
+### 💡 Boas Práticas
+
+- ✅ Testes isolados e independentes
+- ✅ Mocks de dependências externas (Redux, Router)
+- ✅ Nomes descritivos e em português
+- ✅ Foco no comportamento, não na implementação
+- ✅ Cobertura de casos felizes e casos de erro
+
+---
+
+## 🚀 Tecnologias do Projeto
+
+- **React 19** com TypeScript
+- **Vite** como bundler
+- **Tailwind CSS + DaisyUI** para styling
+- **Redux Toolkit + RTK Query** para gerenciamento de estado
+- **React Router Dom** para roteamento
+- **React Hook Form** para formulários
+- **Vitest** para testes
