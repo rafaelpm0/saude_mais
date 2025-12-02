@@ -138,7 +138,7 @@ npm run test:cov       # Com cobertura
 ## APIs e Endpoints
 
 O backend está configurado para rodar na porta 5000 e o Swagger estará disponível em:
-`http://localhost:3000/api`
+`http://localhost:5000/api`
 
 ## 🆕 Funcionalidades Implementadas - Módulo Admin
 

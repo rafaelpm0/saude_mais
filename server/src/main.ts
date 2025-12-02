@@ -26,7 +26,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Escuta em todas as interfaces
-  await app.listen(3000, '0.0.0.0');
+  // Escuta em todas as interfaces na porta 5000
+  await app.listen(5000, '0.0.0.0');
+  console.log('🚀 Servidor rodando na porta 5000');
+  console.log('📚 Swagger disponível em: http://localhost:5000/api');
 }
 bootstrap();

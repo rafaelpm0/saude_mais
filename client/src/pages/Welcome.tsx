@@ -4,24 +4,24 @@ function Welcome() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 px-4 py-8 sm:py-12">
+      <div className="max-w-4xl mx-auto w-full">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="mb-8">
-            <h1 className="text-6xl font-bold text-blue-700 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-blue-700 mb-3 sm:mb-4 px-2">
               Clínica Saúde+
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
               Sua saúde em primeiro lugar. Cuidado completo e humanizado para toda a família.
             </p>
           </div>
           
           {/* Medical Icon */}
-          <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-32 h-32 bg-blue-100 rounded-full mb-6">
+          <div className="mb-6 sm:mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-blue-100 rounded-full mb-4 sm:mb-6">
               <svg 
-                className="w-16 h-16 text-blue-600" 
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-blue-600" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -38,46 +38,46 @@ function Welcome() {
         </div>
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          <div className="text-center p-6 bg-white rounded-lg shadow-lg">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
+          <div className="text-center p-4 sm:p-6 bg-white rounded-lg shadow-lg">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Especialidades Médicas</h3>
-            <p className="text-gray-600">Atendimento especializado com profissionais qualificados</p>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Especialidades Médicas</h3>
+            <p className="text-sm sm:text-base text-gray-600">Atendimento especializado com profissionais qualificados</p>
           </div>
 
-          <div className="text-center p-6 bg-white rounded-lg shadow-lg">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center p-4 sm:p-6 bg-white rounded-lg shadow-lg">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h3z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Agendamento Online</h3>
-            <p className="text-gray-600">Marque suas consultas de forma rápida e prática</p>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Agendamento Online</h3>
+            <p className="text-sm sm:text-base text-gray-600">Marque suas consultas de forma rápida e prática</p>
           </div>
 
-          <div className="text-center p-6 bg-white rounded-lg shadow-lg">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center p-4 sm:p-6 bg-white rounded-lg shadow-lg sm:col-span-2 md:col-span-1">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Cuidado Humanizado</h3>
-            <p className="text-gray-600">Atendimento com carinho e atenção personalizada</p>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Cuidado Humanizado</h3>
+            <p className="text-sm sm:text-base text-gray-600">Atendimento com carinho e atenção personalizada</p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="text-center space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <button
               onClick={() => navigate('/login')}
-              className="btn btn-primary btn-lg px-8 py-3 text-lg"
+              className="btn btn-primary btn-md sm:btn-lg px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg w-full sm:w-auto"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
               Fazer Login
@@ -85,16 +85,17 @@ function Welcome() {
             
             <button
               onClick={() => navigate('/register')}
-              className="btn btn-outline btn-lg px-8 py-3 text-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+              className="btn btn-outline btn-md sm:btn-lg px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white w-full sm:w-auto"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
-              Cadastrar como Paciente
+              <span className="hidden sm:inline">Cadastrar como Paciente</span>
+              <span className="sm:hidden">Cadastrar</span>
             </button>
           </div>
           
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
             Primeira consulta? Cadastre-se como paciente e agende sua consulta
           </p>
         </div>
